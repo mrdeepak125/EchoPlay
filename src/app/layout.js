@@ -33,6 +33,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <meta name="google-site-verification" content="vBxvC-ztGC2krNZlGJ43xlR6IeF63fYC3cW_0Hn4jy0" />
       <Script
         async
         src="https://www.googletagmanager.com/gtag/js?id=G-Z4FJ5T627Q"
