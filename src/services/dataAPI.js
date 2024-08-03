@@ -198,7 +198,7 @@ export async function sendResetPasswordLink(email) {
 export async function getRecommendedSongs(artistId, songId) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/songs/${songId}/suggestions`
+      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/songs/${songId}/suggestions?limit=100`
     );
     const data = await response.json();
     return data?.data;
