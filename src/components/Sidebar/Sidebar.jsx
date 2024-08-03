@@ -59,7 +59,7 @@ const Sidebar = ({ showNav, setShowNav }) => {
           </p>
         </Link>
         <a
-          href="https://github.com/mrdeepak125/music-with-react"
+          href="https://github.com/mrdeepak125/EchoPlay"
           target="_blank"
           rel="noreferrer"
         >
