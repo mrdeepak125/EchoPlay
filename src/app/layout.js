@@ -26,6 +26,8 @@ export const metadata = {
   icons: [{ rel: "icon", url: Favicon.src }],
   site_name: "EchoPlay",
   manifest: "/manifest.json",
+  name :"google-site-verification",
+  content :"vBxvC-ztGC2krNZlGJ43xlR6IeF63fYC3cW_0Hn4jy0",
 };
 
 export default function RootLayout({ children }) {
