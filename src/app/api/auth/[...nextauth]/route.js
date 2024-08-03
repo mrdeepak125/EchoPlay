@@ -12,14 +12,15 @@ const options = {
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
-
     CredentialsProvider({
       name: "Credentials",
-      credentials: {},
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
       async authorize(credentials) {
         try {
           await dbConnect();
-          console.log("credentials");
           const { email, password } = credentials;
           const user = await User.findOne({ email });
           if (user && (await bcrypt.compare(password, user.password))) {
@@ -43,19 +44,7 @@ const options = {
     maxAge: 30 * 24 * 60 * 60,
   },
   secret: process.env.JWT_SECRET,
-
   callbacks: {
-    // async session({ session}) {
-    //     const  sessionUser  = await User.findOne({ email: session.user.email });
-    //     if (sessionUser) {
-    //         session.user.id = sessionUser._id;
-    //         session.userName = sessionUser.userName;
-    //         session.imageUrl = sessionUser.imageUrl;
-    //         session.isVerified = sessionUser.isVerified;
-    //     }
-    //     return session;
-    // },
-
     async signIn({ account, profile }) {
       if (account.provider === "google") {
         try {
@@ -81,6 +70,17 @@ const options = {
       }
       return true;
     },
+    // Uncomment if you need additional session handling
+    // async session({ session }) {
+    //   const sessionUser = await User.findOne({ email: session.user.email });
+    //   if (sessionUser) {
+    //     session.user.id = sessionUser._id;
+    //     session.userName = sessionUser.userName;
+    //     session.imageUrl = sessionUser.imageUrl;
+    //     session.isVerified = sessionUser.isVerified;
+    //   }
+    //   return session;
+    // },
   },
 };
 
