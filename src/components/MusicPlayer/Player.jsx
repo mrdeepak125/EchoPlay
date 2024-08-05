@@ -18,7 +18,10 @@ const Player = ({
   appTime,
 }) => {
   const ref = useRef(null);
-  // eslint-disable-next-line no-unused-expressions
+
+  // Logging to check if ref is being set correctly
+  // console.log("Ref current:", ref.current);
+
   if (ref.current) {
     if (isPlaying) {
       ref.current.play();
@@ -27,7 +30,7 @@ const Player = ({
     }
   }
 
-  // media session metadata:
+  // Media session metadata:
   const mediaMetaData = activeSong.name
     ? {
         title: activeSong?.name,
@@ -42,9 +45,10 @@ const Player = ({
         ],
       }
     : {};
+
   useEffect(() => {
     // Check if the Media Session API is available in the browser environment
-    if ("mediaSession" in navigator) {
+    if ("mediaSession" in navigator) {     
       // Set media metadata
       navigator.mediaSession.metadata = new window.MediaMetadata(mediaMetaData);
 
@@ -59,9 +63,12 @@ const Player = ({
       navigator.mediaSession.setActionHandler("seekforward", () => {
         setSeekTime(appTime + 5);
       });
+    } else {
+      // console.log("Media Session API is not available");
     }
   }, [mediaMetaData]);
-  // media session handlers:
+
+  // Media session handlers:
   const onPlay = () => {
     handlePlayPause();
   };
@@ -79,11 +86,16 @@ const Player = ({
   };
 
   useEffect(() => {
-    ref.current.volume = volume;
+    if (ref.current) {
+      ref.current.volume = volume;
+    }
   }, [volume]);
-  // updates audio element only on seekTime change (and not on each rerender):
+
+  // Updates audio element only on seekTime change (and not on each rerender):
   useEffect(() => {
-    ref.current.currentTime = seekTime;
+    if (ref.current) {
+      ref.current.currentTime = seekTime;
+    }
   }, [seekTime]);
 
   return (
