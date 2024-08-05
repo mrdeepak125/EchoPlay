@@ -1,36 +1,56 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { MdOutlineFileDownload } from "react-icons/md";
-import useDownloader from "react-use-downloader";
 import { MdDownloadForOffline } from "react-icons/md";
+import { set } from "idb-keyval";
+import useDownloader from "react-use-downloader";
 
 const Downloader = ({ activeSong, icon }) => {
-  const { size, elapsed, percentage, download, error, isInProgress } =
-    useDownloader();
+  const { size, elapsed, percentage, download, error, isInProgress } = useDownloader();
+  const [downloaded, setDownloaded] = useState(false);
 
   const songUrl = activeSong?.downloadUrl?.[4]?.url;
   const filename = `${activeSong?.name
     ?.replace("&#039;", "'")
     ?.replace("&amp;", "&")}.mp3`;
 
+  useEffect(() => {
+    if (downloaded) {
+      // Fetch the downloaded file and store it in IndexedDB
+      fetch(songUrl)
+        .then((response) => response.blob())
+        .then(async (blob) => {
+          const songData = {
+            ...activeSong,
+            file: blob,
+          };
+          await set(activeSong.id, songData);
+          console.log(`Song ${filename} saved successfully in IndexedDB`);
+        })
+        .catch((error) => {
+          console.error("Failed to save in IndexedDB:", error);
+        })
+        .finally(() => setDownloaded(false));
+    }
+  }, [downloaded, songUrl, activeSong, filename]);
+
+  const handleDownload = (e) => {
+    e.stopPropagation();
+    download(songUrl, filename);
+    setDownloaded(true);
+  };
+
   return (
     <div
-      onClick={(e) => {
-        e.stopPropagation();
-        download(songUrl, filename);
-      }}
-      className={`flex  mb-1 cursor-pointer w-7`}
+      onClick={handleDownload}
+      className={`flex mb-1 cursor-pointer w-7`}
     >
       <div
         title={isInProgress ? "Downloading" : "Download"}
-        className={
-          isInProgress ? "download-button flex justify-center items-center" : ""
-        }
+        className={isInProgress ? "download-button flex justify-center items-center" : ""}
       >
         {isInProgress ? (
-          <div className=" text-white font-extrabold text-xs m-">
-            {percentage}
-          </div>
+          <div className="text-white font-extrabold text-xs m-">{percentage}%</div>
         ) : icon === 2 ? (
           <MdDownloadForOffline size={25} color={"#ffff"} />
         ) : (

@@ -29,7 +29,7 @@ const SongsList = ({
   playlistID,
   setSongs,
 }) => {
-  console.log("SongData", SongData);
+  // console.log("SongData", SongData);
   const { activeSong } = useSelector((state) => state.player);
   const [showMenu, setShowMenu] = useState(false);
   const [playlists, setPlaylists] = useState([]);

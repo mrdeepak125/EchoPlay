@@ -10,6 +10,7 @@ import Profile from "./Profile";
 import { useDispatch } from "react-redux";
 import Playlists from "./Playlists";
 import { setProgress } from "@/redux/features/loadingBarSlice";
+import Download from "./Download";
 
 const Sidebar = ({ showNav, setShowNav }) => {
   const dispatch = useDispatch();
@@ -46,6 +47,7 @@ const Sidebar = ({ showNav, setShowNav }) => {
           <hr className="border-gray-400 w-[95%] mx-auto" />
         </div>
         <Favourites setShowNav={setShowNav} />
+        <Download setShowNav={setShowNav} />
         <div className="flex flex-col gap-1">
           <hr className="border-gray-400 w-[95%] mx-auto" />
           <Playlists setShowNav={setShowNav} />
