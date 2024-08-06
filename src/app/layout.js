@@ -33,20 +33,30 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <meta name="google-site-verification" content="vBxvC-ztGC2krNZlGJ43xlR6IeF63fYC3cW_0Hn4jy0" />
-      <Script
-        async
-        src="https://www.googletagmanager.com/gtag/js?id=G-Z4FJ5T627Q"
-      ></Script>
-      <Script>
-        {`
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-Z4FJ5T627Q');
-  `}
-      </Script>
+      <head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>EchoPlay</title>
+        <meta name="description" content="Create your own Playlists and add songs to Favourite. Trending songs." />
+        <meta property="og:title" content="EchoPlay | Music Streaming App" />
+        <meta property="og:description" content="Create your own Playlists and add songs to Favourite. Trending songs." />
+        <meta property="og:image" content="https://res.cloudinary.com/djdi5hkyx/image/upload/v1722598011/logo-white_cdtrzl.png" />
+        <meta property="og:url" content="https://echoplay.netlify.app/" />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://echoplay.netlify.app/" />
+        <meta name="robots" content="index, follow" />
+        <meta name="google-site-verification" content="vBxvC-ztGC2krNZlGJ43xlR6IeF63fYC3cW_0Hn4jy0" />
+        <link rel="icon" href={Favicon.src} />
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-Z4FJ5T627Q"></Script>
+        <Script>
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-Z4FJ5T627Q');
+          `}
+        </Script>
+      </head>
       <body className={poppins.className}>
         <Providers>
           <AuthProvider>
@@ -56,7 +66,7 @@ export default function RootLayout({ children }) {
             <Toaster />
             {children}
             <div className="h-20"></div>
-            <div className="fixed  bottom-0 left-0 right-0 flex backdrop-blur-lg rounded-t-3 z-50">
+            <div className="fixed bottom-0 left-0 right-0 flex backdrop-blur-lg rounded-t-3 z-50">
               <MusicPlayer />
             </div>
           </AuthProvider>
