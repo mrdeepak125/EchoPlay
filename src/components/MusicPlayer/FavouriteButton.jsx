@@ -20,4 +20,4 @@ const FavouriteButton = ({favouriteSongs, activeSong, loading, handleAddToFavour
   )
 }
 
-export default FavouriteButton
+export default FavouriteButton;
