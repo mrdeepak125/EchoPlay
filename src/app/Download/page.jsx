@@ -3,11 +3,11 @@ import SongsList from "@/components/SongsList";
 import { getFavourite, getSongData } from "@/services/dataAPI";
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-// import { redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { get, keys, del } from "idb-keyval";
 
 const Page = () => {
-  // const [favouriteSongs, setFavouriteSongs] = useState([]);
+  const [favouriteSongs, setFavouriteSongs] = useState([]);
   const [savedSongs, setSavedSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playingSong, setPlayingSong] = useState(null);
