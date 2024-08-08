@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import FavouriteButton from "./FavouriteButton";
 import getPixels from "get-pixels";
 import { extractColors } from "extract-colors";
+import { get } from "idb-keyval";
 
 const MusicPlayer = () => {
   const {
@@ -176,6 +177,24 @@ const MusicPlayer = () => {
       }
     }
   };
+
+  useEffect(() => {
+    const fetchDownloadedSong = async () => {
+      const downloadedSong = await get(activeSong.id);
+      if (downloadedSong && downloadedSong.isDownloaded) {
+        dispatch(
+          playPause({
+            ...activeSong,
+            downloadUrl: downloadedSong.downloadUrl,
+          })
+        );
+      }
+    };
+
+    if (activeSong?.id) {
+      fetchDownloadedSong();
+    }
+  }, [activeSong, dispatch]);
 
   return (
     <div

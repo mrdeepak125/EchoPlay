@@ -48,7 +48,7 @@ const Player = ({
 
   useEffect(() => {
     // Check if the Media Session API is available in the browser environment
-    if ("mediaSession" in navigator) {     
+    if ("mediaSession" in navigator) {
       // Set media metadata
       navigator.mediaSession.metadata = new window.MediaMetadata(mediaMetaData);
 
@@ -101,7 +101,7 @@ const Player = ({
   return (
     <>
       <audio
-        src={activeSong?.downloadUrl?.[4]?.url}
+        src={activeSong?.downloadUrl?.[4]?.url || activeSong?.downloadUrl}
         ref={ref}
         loop={repeat}
         onEnded={onEnded}

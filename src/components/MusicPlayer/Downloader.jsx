@@ -2,11 +2,12 @@
 import React, { useEffect, useState } from "react";
 import { MdOutlineFileDownload } from "react-icons/md";
 import { MdDownloadForOffline } from "react-icons/md";
-import { set } from "idb-keyval";
+import { set, get } from "idb-keyval";
 import useDownloader from "react-use-downloader";
 
 const Downloader = ({ activeSong, icon }) => {
-  const { size, elapsed, percentage, download, error, isInProgress } = useDownloader();
+  const { size, elapsed, percentage, download, error, isInProgress } =
+    useDownloader();
   const [downloaded, setDownloaded] = useState(false);
 
   const songUrl = activeSong?.downloadUrl?.[4]?.url;
@@ -16,13 +17,14 @@ const Downloader = ({ activeSong, icon }) => {
 
   useEffect(() => {
     if (downloaded) {
-      // Fetch the downloaded file and store it in IndexedDB
       fetch(songUrl)
         .then((response) => response.blob())
         .then(async (blob) => {
+          const blobUrl = URL.createObjectURL(blob);
           const songData = {
             ...activeSong,
-            file: blob,
+            downloadUrl: blobUrl, // Replace the online URL with Blob URL
+            isDownloaded: true, // Flag to indicate it's downloaded
           };
           await set(activeSong.id, songData);
           console.log(`Song ${filename} saved successfully in IndexedDB`);
@@ -41,16 +43,10 @@ const Downloader = ({ activeSong, icon }) => {
   };
 
   return (
-    <div
-      onClick={handleDownload}
-      className={`flex mb-1 cursor-pointer w-7`}
-    >
-      <div
-        title={isInProgress ? "Downloading" : "Download"}
-        className={isInProgress ? "download-button flex justify-center items-center" : ""}
-      >
+    <div onClick={handleDownload} className={`flex mb-1 cursor-pointer w-7`}>
+      <div title={isInProgress ? "Downloading" : "Download"}>
         {isInProgress ? (
-          <div className="text-white font-extrabold text-xs m-">{percentage}%</div>
+          <div className="text-white font-extrabold text-xs">{percentage}%</div>
         ) : icon === 2 ? (
           <MdDownloadForOffline size={25} color={"#ffff"} />
         ) : (
