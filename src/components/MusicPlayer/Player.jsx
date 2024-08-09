@@ -122,7 +122,7 @@ const Player = ({
   return (
     <>
       <audio
-        src={blobUrl || activeSong?.downloadUrl?.[4]?.url || activeSong?.downloadUrl}
+        src={activeSong?.downloadUrl?.[4]?.url}
         ref={ref}
         loop={repeat}
         onEnded={onEnded}
