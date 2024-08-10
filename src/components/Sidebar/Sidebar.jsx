@@ -47,7 +47,7 @@ const Sidebar = ({ showNav, setShowNav }) => {
           <hr className="border-gray-400 w-[95%] mx-auto" />
         </div>
         <Favourites setShowNav={setShowNav} />
-        <Download setShowNav={setShowNav} />
+        {/* <Download setShowNav={setShowNav} /> */}
         <div className="flex flex-col gap-1">
           <hr className="border-gray-400 w-[95%] mx-auto" />
           <Playlists setShowNav={setShowNav} />

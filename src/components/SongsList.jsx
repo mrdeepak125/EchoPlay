@@ -201,7 +201,7 @@ const SongsList = ({
                       )}
                     </div>
                   )}
-                  {showMenu === song?.id && (
+                  {/* {showMenu === song?.id && (
                     <div
                       onClick={(e) => e.stopPropagation()}
                       className="absolute text-white top-0 right-0 bg-black/50 bg-opacity-80 backdrop-blur-sm rounded-lg p-3 w-32 flex flex-col gap-2 z-40"
@@ -213,7 +213,7 @@ const SongsList = ({
                         <MdOutlineDeleteOutline size={20} /> Delete
                       </button>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
             </div>
