@@ -83,9 +83,10 @@ export async function getArtistData(id) {
 }
 
 // get artist songs
-export async function getArtistSongs(id, page) {
+export async function getArtistSongs(id, page, sort) {
   try {
     const response = await fetch(
+      // `${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists/${id}/songs?page=${page}&sortBy=${sort}`
       `${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists/${id}/songs?page=${page}&`
     );
     const data = await response.json();

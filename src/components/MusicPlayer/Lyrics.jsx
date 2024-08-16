@@ -35,6 +35,8 @@ const Lyrics = ({ activeSong }) => {
     }
   };
 
+  console.clear()
+
   return (
     <div
       onClick={(e) => {

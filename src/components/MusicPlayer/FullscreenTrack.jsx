@@ -21,6 +21,8 @@ const FullscreenTrack = ({
     trackMouse: true,
   });
 
+  console.clear()
+  
   return (
     <div
       className={`${

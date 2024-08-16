@@ -1,4 +1,9 @@
-"use client";
+"use client"; // Add this line at the very top
+
+import React, { useEffect, useState, useRef } from "react";
+import { useDispatch } from "react-redux";
+import Image from "next/image";
+import { SwiperSlide } from "swiper/react";
 import SwiperLayout from "@/components/Homepage/Swiper";
 import SongCard from "@/components/Homepage/SongCard";
 import SongListSkeleton from "@/components/SongListSkeleton";
@@ -9,12 +14,6 @@ import {
   getArtistData,
   getArtistSongs,
 } from "@/services/dataAPI";
-import Image from "next/image";
-import React from "react";
-import { useEffect } from "react";
-import { useState } from "react";
-import { useDispatch } from "react-redux";
-import { SwiperSlide } from "swiper/react";
 
 const page = ({ params }) => {
   const dispatch = useDispatch();
@@ -22,29 +21,62 @@ const page = ({ params }) => {
   const [artistSongs, setArtistSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [artistAlbums, setArtistAlbums] = useState([]);
+  const [pageNumber, setPageNumber] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [sortBy, setSortBy] = useState("popularity");
+  const observerRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
       dispatch(setProgress(30));
       const details = await getArtistData(params.artistId);
-      // console.log("details", details);
       dispatch(setProgress(60));
       setArtistDetails(details);
-      const songs = await getArtistSongs(params.artistId, 1);
       dispatch(setProgress(90));
-      setArtistSongs(songs);
+      await fetchSongs(pageNumber, sortBy);
       const albums = await getArtistAlbums(params.artistId, 1);
       setArtistAlbums(albums?.albums);
-      console.log("cccc", albums.albums);
       dispatch(setProgress(100));
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [sortBy]);
+
+  const fetchSongs = async (page, sort) => {
+    console.log(`Fetching songs for page ${page} with sort: ${sort}`);
+    const songs = await getArtistSongs(params.artistId, page, sort);
+    setArtistSongs((prevSongs) => [...prevSongs, ...songs.songs]);
+    if (songs.songs.length === 0 || songs.songs.length < 9) {
+      setHasMore(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!loading && observerRef.current) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore) {
+            setPageNumber((prevPage) => prevPage + 1);
+          }
+        },
+        { threshold: 0.3 }
+      );
+      observer.observe(observerRef.current);
+      return () => observer.disconnect();
+    }
+  }, [loading, hasMore]);
+
+  useEffect(() => {
+    if (pageNumber > 1) {
+      fetchSongs(pageNumber, sortBy);
+    }
+  }, [pageNumber]);
+
+  console.clear();
 
   return (
     <div className="w-11/12 m-auto">
-      <div className=" mt-16 flex flex-col lg:flex-row ">
+      <div className="mt-16 flex flex-col lg:flex-row ">
         {loading ? (
           <div
             role="status"
@@ -63,7 +95,7 @@ const page = ({ params }) => {
             </div>
           </div>
         ) : (
-          <div className=" relative">
+          <div className="relative">
             <Image
               src={artistDetails?.image?.[2]?.url}
               width={300}
@@ -75,7 +107,7 @@ const page = ({ params }) => {
           </div>
         )}
 
-        <div className=" lg:ml-10 text-gray-100 mt-12 flex flex-col gap-y-2">
+        <div className="lg:ml-10 text-gray-100 mt-12 flex flex-col gap-y-2">
           <h1 className="text-2xl lg:text-4xl font-bold">
             {artistDetails?.name}
           </h1>
@@ -89,8 +121,8 @@ const page = ({ params }) => {
             </h4>
           </div>
           <ul className="flex items-center gap-3 text-gray-300">
-            <li className=" text-sm lg:text-lg font-semibold">
-              • {artistDetails?.fanCount} listners
+            <li className="text-sm lg:text-lg font-semibold">
+              • {artistDetails?.fanCount} listeners
             </li>
           </ul>
         </div>
@@ -98,11 +130,14 @@ const page = ({ params }) => {
 
       <div className="mt-10 text-gray-200">
         <h1 className="text-3xl font-bold">Songs</h1>
-        {loading ? (
+        
+        {loading && pageNumber === 0 ? (
           <SongListSkeleton />
         ) : (
           <div>
-            <SongList SongData={artistSongs?.songs} />
+            <SongList SongData={artistSongs} />
+            <div ref={observerRef} className="h-4"></div>
+            {loading && pageNumber > 1 && <SongListSkeleton />}
           </div>
         )}
       </div>

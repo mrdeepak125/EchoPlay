@@ -86,6 +86,8 @@ const Player = ({
     ref.current.currentTime = seekTime;
   }, [seekTime]);
 
+  console.clear()
+
   return (
     <>
       <audio

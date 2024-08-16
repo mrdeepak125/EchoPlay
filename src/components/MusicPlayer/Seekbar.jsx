@@ -5,6 +5,8 @@ const Seekbar = ({ value, min, max, onInput, setSeekTime, appTime, fullScreen })
   // converts the time to format 0:00
   const getTime = (time) => `${Math.floor(time / 60)}:${(`0${Math.floor(time % 60)}`).slice(-2)}`;
 
+  console.clear()
+
   return (
     <div className={` ${!fullScreen ? 'hidden sm:flex':' flex mt-5'}   flex-row items-center`}>
       <button type="button" onClick={(e) =>{e.stopPropagation(); setSeekTime(appTime - 5)}} className="hidden lg:mr-4 lg:block text-white">
