@@ -62,7 +62,7 @@ const PlaylistModal = ({ show, setShow }) => {
                         </div>
                             <button onClick={handelCreate} className='text-sm group font-semibold mb-7 flex gap-2 border-[1.5px] border-white rounded-lg px-2 items-center py-2'>
                                 {
-                                    loading ? <div className='custom-loader w-[20px] h-[20px]'></div> : <FaPlus className=' w-[20] h-[20px] group-hover:text-[#00e6e6]' />
+                                    loading ? <div className='custom-loader w-[20px] h-[20px]'></div> : <FaPlus className=' w-[20] h-[20px] group-hover:text-[#ff6cab]' />
                                 }
                                 Create</button>
                     </div>

@@ -47,7 +47,7 @@ const Lyrics = ({ activeSong }) => {
             setActiveTab("queue");
           }}
           className={`${
-            activeTab === "queue" ? "border-[#00e6e6] border-b-2" : ""
+            activeTab === "queue" ? "border-[#ff6cab] border-b-2" : ""
           } text-white text-xl m-3 mt-20 sm:mt-0 font-medium `}
         >
           Queue
@@ -57,7 +57,7 @@ const Lyrics = ({ activeSong }) => {
             setActiveTab("lyrics");
           }}
           className={`${
-            activeTab === "lyrics" ? "border-[#00e6e6] border-b-2" : ""
+            activeTab === "lyrics" ? "border-[#ff6cab] border-b-2" : ""
           } text-white text-xl m-3 mt-20 sm:mt-0  font-medium`}
         >
           Lyrics
@@ -102,7 +102,7 @@ const Lyrics = ({ activeSong }) => {
                   placeholder="autoAddButton"
                   title={autoAdd ? "on" : "off"}
                 ></input>
-                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none ring-2  ring-gray-500 ch rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-[#00e6e6]"></div>
+                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none ring-2  ring-gray-500 ch rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-[#ff6cab]"></div>
               </label>
             </div>
             {currentSongs?.length > 0 ? (

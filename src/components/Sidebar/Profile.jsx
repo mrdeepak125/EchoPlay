@@ -34,13 +34,13 @@ const Profile = ({setShowNav}) => {
                             <button onClick={()=>{
                                 setShowNav(false);
                                 router.push('/login');
-                            }} className=' border-2 border- px-3 py-1 m-2 rounded text-lg  border-[#00e6e6]'>
+                            }} className=' border-2 border- px-3 py-1 m-2 rounded text-lg  border-[#ff6cab]'>
                             Login&nbsp;
                             </button>
                             <button onClick={()=>{
                                 setShowNav(false);
                                 router.push('/signup');
-                            }} className=' border-2 border- px-3 py-1 m-2 rounded text-lg  border-[#00e6e6]'>
+                            }} className=' border-2 border- px-3 py-1 m-2 rounded text-lg  border-[#ff6cab]'>
                             Signup
                             </button>
                         </div>
@@ -54,7 +54,7 @@ const Profile = ({setShowNav}) => {
                             <MdLogout size={20} onClick={()=>{
                                 setShowNav(false);
                                 signOut();
-                            }} className='cursor-pointer text-white hover:text-[#00e6e6]' />
+                            }} className='cursor-pointer text-white hover:text-[#ff6cab]' />
                             </div>
                             <h2 className='text-[10px] truncate'>{data?.user?.email || user?.email }</h2>
                             </div>

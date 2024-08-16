@@ -58,7 +58,7 @@ const page = () => {
     <div className=" w-11/12 mx-auto mt-32 min-h-screen">
       <div className=" flex justify-center items-center">
         <div className="container flex justify-center flex-col items-center w-screen sm:w-[90vw] lg:w-1/2">
-          <h1 className=" text-4xl text-cyan-400 font-medium mb-8">Login</h1>
+          <h1 className=" text-4xl text-pink-400 font-medium mb-8">Login</h1>
           <form
             onSubmit={handelSubmit}
             className="text-white flex flex-col text-base lg:text-xl gap-2 font-medium"
@@ -92,16 +92,16 @@ const page = () => {
               />
             </div>
             <Link href={"/reset-password"}>
-              <p className=" text-xs text-[#00e6e6]">Forgot Password?</p>
+              <p className=" text-xs text-[#ff6cab]">Forgot Password?</p>
             </Link>
             <div className=" w-full flex justify-center">
               <button
                 type="submit"
                 className="relative inline-block px-4 py-2 font-medium group"
               >
-                <span className="absolute inset-0 w-full h-full transition duration-200 ease-out transform translate-x-1 translate-y-1 bg-cyan-500 group-hover:-translate-x-0 group-hover:-translate-y-0"></span>
+                <span className="absolute inset-0 w-full h-full transition duration-200 ease-out transform translate-x-1 translate-y-1 bg-pink-500 group-hover:-translate-x-0 group-hover:-translate-y-0"></span>
                 <span className="absolute inset-0 w-full h-full bg-black border-2 border-white group-hover:bg-"></span>
-                <span className="relative text-white group-hover:text-cyan-400">
+                <span className="relative text-white group-hover:text-pink-400">
                   Login
                 </span>
               </button>
@@ -115,15 +115,15 @@ const page = () => {
               <button
                 onClick={() => signIn("google")}
                 type="button"
-                className="flex items-center gap-[.7px] hover:border-[#00e6e6] justify-center px-4 py-2 group font-medium border-2 border-white rounded-sm"
+                className="flex items-center gap-[.7px] hover:border-[#ff6cab] justify-center px-4 py-2 group font-medium border-2 border-white rounded-sm"
               >
-                <FaGoogle className=" group-hover:text-[#00e6e6]" />
+                <FaGoogle className=" group-hover:text-[#ff6cab]" />
                 oogle
               </button>
             </div>
             <p className=" w-full flex justify-center gap-2">
               Don't have an account?{" "}
-              <Link href={"/signup"} className=" text-cyan-400 font-semibold">
+              <Link href={"/signup"} className=" text-pink-400 font-semibold">
                 {" "}
                 Sign Up
               </Link>

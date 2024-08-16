@@ -10,8 +10,8 @@ html {
 
 body,
 .gradient {
-  background: rgb(100, 201, 215);
-  background: linear-gradient(180deg, rgba(100, 201, 215, 0.8996848739495799) 0%, rgba(0, 8, 20, 1) 32%);
+  background: rgb(255, 108, 171);
+  background: linear-gradient(180deg, rgba(255, 108, 171, 0.8996848739495799) 0%, rgba(0, 8, 20, 1) 32%);
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-size: cover;
@@ -278,7 +278,7 @@ input {
   width: 16px;
   height: 16px;
   border-radius: 10px;
-  background: #00e6e6;
+  background: #ff6cab;
   animation: move 2s linear infinite alternate;
 }
 
@@ -339,8 +339,8 @@ input {
   height: 20px;
   border-radius: 50%;
   background:
-    radial-gradient(farthest-side, #00e6e6 94%, #0000) top/5px 5px no-repeat,
-    conic-gradient(#0000 30%, #00e6e6);
+    radial-gradient(farthest-side, #ff6cab 94%, #0000) top/5px 5px no-repeat,
+    conic-gradient(#0000 30%, #ff6cab);
   -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 5px), #000 0);
   animation: s3 1s infinite linear;
 }
@@ -366,7 +366,7 @@ input {
   font-size: 18px;
   outline: none;
   transition: all .5s ease-in-out;
-  background-color: #22a6b3;
+  background-color: #ff6cab;
   color: #fff;
 }
 

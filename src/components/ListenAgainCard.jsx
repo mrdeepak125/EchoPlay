@@ -24,7 +24,7 @@ const ListenAgainCard = ({ song, index, SongData }) => {
           handlePlayClick(song, index);
         }}
         className={`flex w-40 md:w-80 items-center mt-5 cursor-pointer group border-b-[1px] border-gray-400 justify-between ${
-          activeSong?.id === song?.id && " text-[#00e6e6]"
+          activeSong?.id === song?.id && " text-[#ff6cab]"
         }`}
       >
         <div className="flex items-center gap-5">
@@ -41,7 +41,7 @@ const ListenAgainCard = ({ song, index, SongData }) => {
             {activeSong?.id === song?.id ? (
               <BiHeadphone
                 size={27}
-                className=" absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[#00e6e6]"
+                className=" absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[#ff6cab]"
               />
             ) : (
               <BsPlayFill

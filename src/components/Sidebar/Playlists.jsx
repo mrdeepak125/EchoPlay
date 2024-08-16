@@ -91,7 +91,7 @@ const Playlists = ({ setShowNav }) => {
                 onClick={() => setShow(true)}
                 className="text-xs group font-semibold mb-7 flex gap-2 border-[1.5px] border-white rounded-lg px-2 items-center py-2"
               >
-                <FaPlus className=" group-hover:text-[#00e6e6]" />
+                <FaPlus className=" group-hover:text-[#ff6cab]" />
                 Create
               </button>
             </div>

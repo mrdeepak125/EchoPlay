@@ -35,7 +35,7 @@ const page = () => {
     <div className=' w-11/12 mx-auto mt-32 min-h-screen'>
     <div className=" flex justify-center items-center">
         <div className="container flex justify-center flex-col items-center w-[90vw] lg:w-1/2">
-            <h1 className=" text-4xl text-cyan-400 font-medium mb-8">Forgot Password</h1>
+            <h1 className=" text-4xl text-pink-400 font-medium mb-8">Forgot Password</h1>
             <p className=" text-white text-sm font-medium mb-8 text-center">Enter your email address and we will send you a link to reset your password.</p>
             <form onSubmit={handelSubmit} className="text-white flex flex-col text-base lg:text-xl gap-5 font-medium">
                 <div className=" flex gap-4 items-end">
@@ -46,7 +46,7 @@ const page = () => {
                     <button type='submit' className="relative inline-block px-4 py-2 font-medium group">
                         <span className="absolute inset-0 w-full h-full transition duration-200 ease-out transform translate-x-1 translate-y-1 bg-cyan-500 group-hover:-translate-x-0 group-hover:-translate-y-0"></span>
                         <span className="absolute inset-0 w-full h-full bg-black border-2 border-white group-hover:bg-"></span>
-                        <span className="relative text-white group-hover:text-cyan-400">Send</span>
+                        <span className="relative text-white group-hover:text-pink-400">Send</span>
                     </button>
                 </div>
             </form>

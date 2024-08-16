@@ -61,7 +61,7 @@ const Languages = () => {
                 htmlFor={language.id}
                 className={`${
                   selectedLanguages.includes(language.id)
-                    ? "border-[#00e6e6] text-[#00e6e6]"
+                    ? "border-[#ff6cab] text-[#ff6cab]"
                     : "border-white text-white"
                 } cursor-pointer transition-colors text-sm min-w-[86px] text-center  border rounded-md p-2 font-semibold`}
               >
