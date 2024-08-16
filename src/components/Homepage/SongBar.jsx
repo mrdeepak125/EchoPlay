@@ -32,8 +32,8 @@ const SongBar = ({ playlist, i }) => {
         style={{
           background:
             cardColor &&
-            `linear-gradient(90deg, rgba(${cardColor[0].red}, ${cardColor[0].green}, ${cardColor[0].blue}, 0.2) 0%, rgba(${cardColor[1].red}, ${cardColor[1].green}, ${cardColor[1].blue}, 0.3) 5%,
-              rgba(${cardColor[2].red}, ${cardColor[2].green}, ${cardColor[2].blue}, 0.2 
+            `linear-gradient(90deg, rgba(${cardColor[0].violet}, ${cardColor[0].green}, ${cardColor[0].blue}, 0.2) 0%, rgba(${cardColor[1].violet}, ${cardColor[1].green}, ${cardColor[1].blue}, 0.3) 5%,
+              rgba(${cardColor[2].violetiolet}, ${cardColor[2].green}, ${cardColor[2].blue}, 0.2 
               ) 100%)`,
         }}
       >
