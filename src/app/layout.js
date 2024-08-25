@@ -9,6 +9,8 @@ import { Toaster } from "react-hot-toast";
 import AuthProvider from "./AuthProvider";
 import { Poppins } from "next/font/google";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const poppins = Poppins({
   weight: "500",
@@ -65,6 +67,8 @@ export default function RootLayout({ children }) {
             <Navbar />
             <Toaster />
             {children}
+            <Analytics />
+            <SpeedInsights />
             <div className="h-20"></div>
             <div className="fixed bottom-0 left-0 right-0 flex backdrop-blur-lg rounded-t-3 z-50">
               <MusicPlayer />
