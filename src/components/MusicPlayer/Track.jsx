@@ -18,7 +18,7 @@ const Track = ({ isPlaying, isActive, activeSong, fullScreen }) => (
           "https://res.cloudinary.com/dbr73rpz9/image/upload/v1690447758/chibi_qxvxq6.png"
         }
         alt="cover art"
-        className="rounded-full"
+        className="rounded-full h-full"
       />
     </div>
     <div className={`w-[190px] select-none cursor-pointer`}>

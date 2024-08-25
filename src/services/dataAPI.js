@@ -207,3 +207,30 @@ export async function getRecommendedSongs(artistId, songId) {
     console.log(error);
   }
 }
+
+// get song data
+export async function getYtSearchedData(query) {
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=500&order=relevance&type=video&q=${query}&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`
+    );
+    const data = await response.json();
+    return data.items; // Return the correct data
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+
+// get song data
+export async function getYtSongData(id) {
+  try {
+    const response = await fetch(
+      `https://youtube-mp36.p.rapidapi.com/dl?id=${id}`
+    );
+    const data = await response.json();
+    return data?.data;
+  } catch (error) {
+    console.log(error);
+  }
+}

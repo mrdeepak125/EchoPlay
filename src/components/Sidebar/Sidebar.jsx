@@ -18,7 +18,7 @@ const Sidebar = ({ showNav, setShowNav }) => {
     <div
       className={`${
         showNav ? "" : "translate-x-[-100%]"
-      } transition-all duration-200  h-screen lg:w-[300px] md:w-[250px] w-[65vw] fixed top-0 left-0 z-40 bg-[#020813] flex flex-col justify-between`}
+      } transition-all duration-200  h-screen lg:w-[300px] md:w-[250px] w-[75vw] fixed top-0 left-0 z-40 bg-[#020813] flex flex-col justify-between`}
     >
       <div>
         <div className=" flex mt-3">

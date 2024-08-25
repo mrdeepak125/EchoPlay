@@ -32,7 +32,7 @@ const Player = ({
     ? {
         title: activeSong?.name,
         artist: activeSong?.primaryArtists,
-        album: activeSong?.album.name,
+        // album: activeSong?.album.name,
         artwork: [
           {
             src: activeSong.image[2]?.url,
