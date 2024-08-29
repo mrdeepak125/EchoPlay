@@ -6,11 +6,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { SwiperSlide } from "swiper/react";
 import { BsPlayFill, BsYoutube } from "react-icons/bs";
-import {
-  playPause,
-  setActiveSong,
-  setFullScreen,
-} from "@/redux/features/playerSlice";
+import { playPause, setActiveSong, setFullScreen } from "@/redux/features/playerSlice";
 import Image from "next/image";
 import Link from "next/link";
 import SongListSkeleton from "@/components/SongListSkeleton";
@@ -21,16 +17,25 @@ const Page = ({ params }) => {
   const [query, setQuery] = useState(params.query);
   const [searchedData, setSearchedData] = useState(null);
   const [youtubeResults, setYoutubeResults] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingJiosaavn, setLoadingJiosaavn] = useState(true);
+  const [loadingYoutube, setLoadingYoutube] = useState(true);
   const { currentSongs } = useSelector((state) => state.player);
   const [activeTab, setActiveTab] = useState("jiosaavn");
 
   useEffect(() => {
+    const savedTab = localStorage.getItem('activeTab');
+    if (savedTab) {
+      setActiveTab(savedTab);
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchData = async () => {
+      setLoadingJiosaavn(true);
       dispatch(setProgress(70));
       const response = await getSearchedData(query);
       setSearchedData(response);
-      setLoading(false);
+      setLoadingJiosaavn(false);
       dispatch(setProgress(100));
     };
     fetchData();
@@ -38,14 +43,15 @@ const Page = ({ params }) => {
 
   useEffect(() => {
     const fetchYtData = async () => {
+      setLoadingYoutube(true);
       dispatch(setProgress(70));
       const response = await getYtSearchedData(query);
       setYoutubeResults(response);
-      setLoading(false);
+      setLoadingYoutube(false);
       dispatch(setProgress(100));
     };
     fetchYtData();
-  }, [query]);  
+  }, [query]);
 
   const handlePlayClick = async (song) => {
     if (song?.type === "song") {
@@ -140,7 +146,6 @@ const Page = ({ params }) => {
         };
 
         console.log(songData);
-        
   
         dispatch(
           setActiveSong({
@@ -162,10 +167,10 @@ const Page = ({ params }) => {
       console.error("Error converting YouTube video to MP3: ", error);
     }
   };
-  
 
   const handleTabClick = (platform) => {
     setActiveTab(platform);
+    localStorage.setItem('activeTab', platform);
   };
 
   return (
@@ -175,8 +180,8 @@ const Page = ({ params }) => {
         <div className="flex gap-5">
           <div
             onClick={() => handleTabClick("jiosaavn")}
-            className={`flex items-center gap-2 mt-5 group rounded-3xl py-2 px-3 hover:border-[#00e6e6] w-fit cursor-pointer border ${
-              activeTab === "jiosaavn" ? "border-[#00e6e6]" : "border-white"
+            className={`flex items-center gap-2 mt-5 group rounded-3xl py-2 px-3 cursor-pointer border ${
+              activeTab === "jiosaavn" ? "border-[#00e6e6] text-[#00e6e6]" : "border-white"
             }`}
           >
             <BsPlayFill
@@ -185,17 +190,21 @@ const Page = ({ params }) => {
                 activeTab === "jiosaavn" ? "text-[#00e6e6]" : ""
               }`}
             />
-            <p className="text-lg font-semibold text-white">JioSaavn</p>
+            <p className="text-lg font-semibold text-gray-200">JioSaavn</p>
           </div>
           <div
             onClick={() => handleTabClick("youtube")}
-            className="flex items-center gap-2 mt-5 group rounded-3xl py-2 px-3 hover:border-[#00e6e6] w-fit cursor-pointer border border-white"
+            className={`flex items-center gap-2 mt-5 group rounded-3xl py-2 px-3 cursor-pointer border ${
+              activeTab === "youtube" ? "border-[#00e6e6] text-[#00e6e6]" : "border-white"
+            }`}
           >
             <BsYoutube
               size={25}
-              className="text-gray-200 group-hover:text-[#00e6e6]"
+              className={`text-gray-200 ${
+                activeTab === "youtube" ? "text-[#00e6e6]" : ""
+              }`}
             />
-            <p className="text-lg font-semibold text-white">YouTube</p>
+            <p className="text-lg font-semibold text-gray-200">YouTube</p>
           </div>
         </div>
 
@@ -206,53 +215,56 @@ const Page = ({ params }) => {
             </h1>
             <div className="mt-10 text-gray-200">
               <h2 className="text-lg lg:text-4xl font-semibold">Songs</h2>
-              {searchedData && searchedData?.songs?.results?.length > 0 ? (
-                <div className="mt-5">
-                  {searchedData?.songs?.results?.map((song, index) => (
-                    <div
-                      key={index}
-                      onClick={() => {
-                        handlePlayClick(song);
-                      }}
-                      className="flex items-center  mt-5 cursor-pointer group border-b-[1px] border-gray-400 justify-between"
-                    >
-                      <div className="flex items-center gap-5">
-                        <div className="relative">
-                          <img
-                            src={song?.image?.[2]?.url}
-                            alt={song?.title}
-                            width={50}
-                            height={50}
-                            className="mb-3"
-                          />
-                          <BsPlayFill
-                            size={25}
-                            className=" group-hover:block hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-200"
-                          />
-                        </div>
-                        <div className="w-32 lg:w-80">
-                          <p className="text-sm lg:text-lg font-semibold truncate">
-                            {song?.title
-                              ?.replace("&#039;", "'")
-                              ?.replace("&amp;", "&")}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="hidden lg:block max-w-56">
-                        {song?.primaryArtists && (
-                          <p className="text-gray-400 truncate">
-                            By: {song?.primaryArtists}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
+              {loadingJiosaavn ? (
                 <SongListSkeleton />
+              ) : (
+                searchedData && searchedData?.songs?.results?.length > 0 ? (
+                  <div className="mt-5">
+                    {searchedData?.songs?.results?.map((song, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handlePlayClick(song)}
+                        className="flex items-center mt-5 cursor-pointer group border-b-[1px] border-gray-400 justify-between"
+                      >
+                        <div className="flex items-center gap-5">
+                          <div className="relative">
+                            <img
+                              src={song?.image?.[2]?.url}
+                              alt={song?.title}
+                              width={50}
+                              height={50}
+                              className="mb-3"
+                            />
+                            <BsPlayFill
+                              size={25}
+                              className="group-hover:block hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-200"
+                            />
+                          </div>
+                          <div className="w-32 lg:w-80">
+                            <p className="text-sm lg:text-lg font-semibold truncate">
+                              {song?.title
+                                ?.replace("&#039;", "'")
+                                ?.replace("&amp;", "&")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="hidden lg:block max-w-56">
+                          {song?.primaryArtists && (
+                            <p className="text-gray-400 truncate">
+                              By: {song?.primaryArtists}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <SongListSkeleton />
+                )
               )}
             </div>
 
+            {/* Other JioSaavn sections */}
             <div className="mt-10 text-gray-200">
               <SwiperLayout title={"Albums"}>
                 {searchedData &&
@@ -274,7 +286,7 @@ const Page = ({ params }) => {
                         <div className="flex flex-col justify-center items-center">
                           <Image
                             src={artist?.image?.[2]?.url}
-                            alt={artist?.name}
+                            alt={artist?.title}
                             width={200}
                             height={200}
                             className="rounded-full"
@@ -298,7 +310,7 @@ const Page = ({ params }) => {
             <div className="mt-10 text-gray-200">
               <SwiperLayout title={"Playlists"}>
                 {searchedData &&
-                  searchedData?.albums?.results?.length > 0 &&
+                  searchedData?.playlists?.results?.length > 0 &&
                   searchedData?.playlists?.results?.map((song) => (
                     <SwiperSlide key={song?.id}>
                       <SongCard song={song} />
@@ -311,56 +323,57 @@ const Page = ({ params }) => {
 
         {activeTab === "youtube" && (
           <div className="mt-10 text-gray-200">
-            {/* YouTube related content will go here */}
             <h1 className="text-3xl font-bold">
               YouTube search results for "{query.replaceAll("%20", " ")}"
             </h1>
             <div className="mt-10 text-gray-200">
               <h2 className="text-lg lg:text-4xl font-semibold">Songs</h2>
-              {youtubeResults?.length > 0 ? (
-                <div className="mt-5">
-                  {youtubeResults.map((item, index) => (
-                    <div
-                      key={index}
-                      onClick={() => {
-                        handlePlayVideo(item);
-                      }}
-                      className="flex items-center  mt-5 cursor-pointer group border-b-[1px] border-gray-400 justify-between"
-                    >
-                      <div className="flex items-center gap-5">
-                        <div className="relative">
-                          <img
-                            src={item.snippet.thumbnails.default.url}
-                            alt={item.snippet.title}
-                            width={50}
-                            height={50}
-                            className="mb-3"
-                          />
-                          <BsPlayFill
-                            size={25}
-                            className=" group-hover:block hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-200"
-                          />
-                        </div>
-                        <div className="w-32 lg:w-80">
-                          <p className="text-sm lg:text-lg font-semibold truncate">
-                            {item.snippet.title
-                              ?.replace("&#039;", "'")
-                              ?.replace("&amp;", "&")}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="hidden lg:block max-w-56">
-                        {item.snippet.channelTitle && (
-                          <p className="text-gray-400 truncate">
-                            By: {item.snippet.channelTitle}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
+              {loadingYoutube ? (
                 <SongListSkeleton />
+              ) : (
+                youtubeResults?.length > 0 ? (
+                  <div className="mt-5">
+                    {youtubeResults.map((item, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handlePlayVideo(item)}
+                        className="flex items-center mt-5 cursor-pointer group border-b-[1px] border-gray-400 justify-between"
+                      >
+                        <div className="flex items-center gap-5">
+                          <div className="relative">
+                            <img
+                              src={item.snippet.thumbnails.default.url}
+                              alt={item.snippet.title}
+                              width={50}
+                              height={50}
+                              className="mb-3"
+                            />
+                            <BsPlayFill
+                              size={25}
+                              className="group-hover:block hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-200"
+                            />
+                          </div>
+                          <div className="w-32 lg:w-80">
+                            <p className="text-sm lg:text-lg font-semibold truncate">
+                              {item.snippet.title
+                                ?.replace("&#039;", "'")
+                                ?.replace("&amp;", "&")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="hidden lg:block max-w-56">
+                          {item.snippet.channelTitle && (
+                            <p className="text-gray-400 truncate">
+                              By: {item.snippet.channelTitle}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <SongListSkeleton />
+                )
               )}
             </div>
           </div>

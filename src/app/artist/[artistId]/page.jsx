@@ -28,6 +28,7 @@ const page = ({ params }) => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       dispatch(setProgress(30));
       const details = await getArtistData(params.artistId);
       dispatch(setProgress(60));
@@ -43,12 +44,13 @@ const page = ({ params }) => {
   }, [sortBy]);
 
   const fetchSongs = async (page, sort) => {
-    console.log(`Fetching songs for page ${page} with sort: ${sort}`);
+    setLoading(true);
     const songs = await getArtistSongs(params.artistId, page, sort);
     setArtistSongs((prevSongs) => [...prevSongs, ...songs.songs]);
     if (songs.songs.length === 0 || songs.songs.length < 9) {
       setHasMore(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -145,7 +147,7 @@ const page = ({ params }) => {
       <div className="mt-10 text-gray-200">
         <SwiperLayout title={"Albums"}>
           {artistAlbums?.map((album, index) => (
-            <SwiperSlide key={index}>
+            <SwiperSlide key={album.id || index}>
               <SongCard song={album} />
             </SwiperSlide>
           ))}

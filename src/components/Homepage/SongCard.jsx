@@ -56,6 +56,102 @@ const SongCard = ({ song, isPlaying, activeSong }) => {
     }
   };
 
+  const handlePlayVideo = async (item) => {
+    try {
+      const videoId = item.id.videoId;
+  
+      // Call the YouTube-to-MP3 conversion API
+      const url = `https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`;
+      const options = {
+        method: 'GET',
+        headers: {
+          'x-rapidapi-key': '43db6998cdmsh2ebabcbb7bfe84ep1865b9jsn0406325a9b5c',
+          'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com'
+        }
+      };
+      
+      const response = await fetch(url, options);
+      const result = await response.json();
+  
+      if (result && result.status === 'ok') {
+        const mp3Url = result.link;
+        const duration = result.duration;
+        const name = result.title;
+  
+        // Simulate the structure for the active song (adjust as necessary)
+        const songData = {
+          name: item.snippet.title,
+          artists: [
+            {
+              name: item.snippet.channelTitle
+            }
+          ],
+          url: mp3Url,
+          image : [
+            {
+              "quality": "50x50",
+              "url": item.snippet.thumbnails.default.url
+            },
+            {
+              "quality": "150x150",
+              "url": item.snippet.thumbnails.medium.url
+            },
+            {
+              "quality": "500x500",
+              "url": item.snippet.thumbnails.high.url
+            }
+          ],
+          artist: item.snippet.channelTitle,
+          downloadUrl: [
+            {
+              "quality": "12kbps",
+              "url": "https://aac.saavncdn.com/259/8cda4df29a90d73c44cc5b1eafca5cf8_12.mp4"
+            },
+            {
+              "quality": "48kbps",
+              "url": "https://aac.saavncdn.com/259/8cda4df29a90d73c44cc5b1eafca5cf8_48.mp4"
+            },
+            {
+              "quality": "96kbps",
+              "url": "https://aac.saavncdn.com/259/8cda4df29a90d73c44cc5b1eafca5cf8_96.mp4"
+            },
+            {
+              "quality": "160kbps",
+              "url": "https://aac.saavncdn.com/259/8cda4df29a90d73c44cc5b1eafca5cf8_160.mp4"
+            },
+            {
+              "quality": "320kbps",
+              "url": mp3Url
+            }
+          ],
+          duration: duration,
+          id: videoId
+        };
+
+        console.log(songData);
+        
+  
+        dispatch(
+          setActiveSong({
+            song: songData,
+            data: currentSongs?.find((s) => s?.id === songData?.id)
+              ? currentSongs
+              : [...currentSongs, songData],
+            i: currentSongs?.find((s) => s?.id === songData?.id)
+              ? currentSongs?.findIndex((s) => s?.id === songData?.id)
+              : currentSongs?.length,
+          })
+        );
+        dispatch(setFullScreen(true));
+        dispatch(playPause(true));
+      } else {
+        console.error("Failed to convert YouTube video to MP3");
+      }
+    } catch (error) {
+      console.error("Error converting YouTube video to MP3: ", error);
+    }
+  };
+
   return (
     <div
       key={song?.id}
@@ -89,7 +185,7 @@ const SongCard = ({ song, isPlaying, activeSong }) => {
               song={song}
               loading={loading}
               handlePause={handlePauseClick}
-              handlePlay={handlePlayClick}
+              handlePlay={handlePlayClick || handlePlayVideo}
             />
           </div>
           <img
