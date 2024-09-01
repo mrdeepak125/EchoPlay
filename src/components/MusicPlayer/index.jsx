@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   nextSong,
@@ -16,6 +16,9 @@ import FullscreenTrack from "./FullscreenTrack";
 import Lyrics from "./Lyrics";
 import Downloader from "./Downloader";
 import { HiOutlineChevronDown } from "react-icons/hi";
+import { MdOutlineTimer } from "react-icons/md";
+import { IoMdArrowDropdown } from "react-icons/io";
+import { Menu, MenuItem, MenuButton } from "@headlessui/react";
 import { addFavourite, getFavourite } from "@/services/dataAPI";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -42,6 +45,10 @@ const MusicPlayer = () => {
   const [shuffle, setShuffle] = useState(false);
   const [favouriteSongs, setFavouriteSongs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [songStopCount, setSongStopCount] = useState(null);
+  const [songsPlayed, setSongsPlayed] = useState(0);
+  const [sleepTimer, setSleepTimer] = useState(null);
+  const [sleepTimerId, setSleepTimerId] = useState(null);
   const dispatch = useDispatch();
   const { status } = useSession();
   const router = useRouter();
@@ -49,14 +56,13 @@ const MusicPlayer = () => {
 
   useEffect(() => {
     if (currentSongs?.length) dispatch(playPause(true));
-  }, [currentIndex]);
+  }, [currentIndex, dispatch, currentSongs]);
 
   useEffect(() => {
     const fetchFavourites = async () => {
       try {
         setLoading(true);
         const res = await getFavourite();
-        // console.log("favourites",res);
         if (res) {
           setFavouriteSongs(res);
         }
@@ -66,7 +72,7 @@ const MusicPlayer = () => {
       }
     };
     fetchFavourites();
-    // set ambient background
+
     const src = activeSong?.image?.[1]?.url;
 
     if (src) {
@@ -84,13 +90,12 @@ const MusicPlayer = () => {
         }
       });
     }
-    // change page title to song name
+
     if (activeSong?.name) {
       document.title = activeSong?.name;
     }
   }, [activeSong]);
 
-  // off scroll when full screen
   useEffect(() => {
     document.documentElement.style.overflow = fullScreen ? "hidden" : "auto";
 
@@ -99,18 +104,19 @@ const MusicPlayer = () => {
     };
   }, [fullScreen]);
 
-  // Hotkey for play pause
-  const handleKeyPress = (event) => {
-    // Check if the pressed key is the spacebar (keyCode 32 or key " ")
-    if (!isTyping && (event.keyCode === 32 || event.key === " ")) {
-      event.preventDefault();
-      handlePlayPause();
-    }
-  };
+  const handleKeyPress = useCallback(
+    (event) => {
+      if (!isTyping && (event.keyCode === 32 || event.key === " ")) {
+        event.preventDefault();
+        handlePlayPause();
+      }
+    },
+    [isTyping]
+  );
+
   useEffect(() => {
     document.addEventListener("keydown", handleKeyPress);
 
-    // Clean up the event listener when the component unmounts
     return () => {
       document.removeEventListener("keydown", handleKeyPress);
     };
@@ -127,16 +133,29 @@ const MusicPlayer = () => {
     }
   };
 
-  const handleNextSong = (e) => {
-    e?.stopPropagation();
-    dispatch(playPause(false));
+  const handleNextSong = useCallback(
+    (e) => {
+      e?.stopPropagation();
+      dispatch(playPause(false));
 
-    if (!shuffle) {
-      dispatch(nextSong((currentIndex + 1) % currentSongs.length));
-    } else {
-      dispatch(nextSong(Math.floor(Math.random() * currentSongs.length)));
-    }
-  };
+      if (songStopCount !== null) {
+        setSongsPlayed((prev) => prev + 1);
+        if (songsPlayed + 1 >= songStopCount) {
+          dispatch(playPause(false));
+          setSongStopCount(null);
+          setSongsPlayed(0);
+          return;
+        }
+      }
+
+      if (!shuffle) {
+        dispatch(nextSong((currentIndex + 1) % currentSongs.length));
+      } else {
+        dispatch(nextSong(Math.floor(Math.random() * currentSongs.length)));
+      }
+    },
+    [dispatch, shuffle, currentIndex, currentSongs, songStopCount, songsPlayed]
+  );
 
   const handlePrevSong = (e) => {
     e?.stopPropagation();
@@ -158,13 +177,10 @@ const MusicPlayer = () => {
     if (favsong?.id && status === "authenticated") {
       try {
         setLoading(true);
-        // optimistic update
-        if (favouriteSongs?.find((song) => song === favsong?.id)) {
-          setFavouriteSongs(
-            favouriteSongs?.filter((song) => song !== favsong?.id)
-          );
+        if (favouriteSongs?.includes(favsong.id)) {
+          setFavouriteSongs(favouriteSongs.filter((id) => id !== favsong.id));
         } else {
-          setFavouriteSongs([...favouriteSongs, favsong?.id]);
+          setFavouriteSongs([...favouriteSongs, favsong.id]);
         }
         const res = await addFavourite(favsong);
         if (res?.success === true) {
@@ -196,7 +212,46 @@ const MusicPlayer = () => {
     }
   }, [activeSong, dispatch]);
 
-  console.clear()
+  useEffect(() => {
+    if (sleepTimerId) {
+      clearTimeout(sleepTimerId);
+    }
+    if (sleepTimer) {
+      const timerId = setTimeout(() => {
+        dispatch(playPause(false));
+        setSleepTimer(null);
+      }, sleepTimer * 60 * 1000);
+      setSleepTimerId(timerId);
+    }
+    return () => {
+      if (sleepTimerId) {
+        clearTimeout(sleepTimerId);
+      }
+    };
+  }, [sleepTimer, dispatch]);
+
+  const handleTimerClick = (e) => {
+    e.stopPropagation();
+  };
+
+  const setStopAfterNSongs = () => {
+    const userInput = prompt("Enter number of songs to play before stopping:");
+    const count = parseInt(userInput, 10);
+    if (!isNaN(count) && count > 0) {
+      setSongStopCount(count);
+      setSongsPlayed(0);
+      alert(`Playback will stop after ${count} song(s).`);
+    } else {
+      alert("Please enter a valid number greater than 0.");
+    }
+  };
+
+  const setSleepTimerDuration = (minutes) => {
+    setSleepTimer(minutes);
+    alert(`Sleep timer set for ${minutes} minutes.`);
+  };
+
+  console.clear();
 
   return (
     <div
@@ -214,22 +269,73 @@ const MusicPlayer = () => {
           : "rgba(0,0,0,0.2)",
       }}
     >
+      {/* Top Icons */}
+      {fullScreen && (
+        <div className="absolute top-4 left-4 flex items-center space-x-4 z-10">
+          {/* Timer Icon and Menu */}
+          <div onClick={handleTimerClick}>
+            <Menu as="div" className="relative inline-block text-left">
+              <MenuButton
+                className="flex items-center text-white text-3xl focus:outline-none"
+                aria-label="Timer Options"
+              >
+                <MdOutlineTimer />
+                <IoMdArrowDropdown className="ml-1 text-2xl" />
+              </MenuButton>
+              <Menu.Items className="absolute mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+                <div className="py-1">
+                  <MenuItem
+                    as="button"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={setStopAfterNSongs}
+                  >
+                    Stop after N songs
+                  </MenuItem>
+                  <Menu as="div" className="relative">
+                    <MenuButton className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex justify-between items-center">
+                      Sleep Timer
+                      <IoMdArrowDropdown />
+                    </MenuButton>
+                    <Menu.Items className="absolute left-full top-0 mt-12 -ml-20 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30">
+                      {[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map(
+                        (min) => (
+                          <MenuItem
+                            key={min}
+                            as="button"
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setSleepTimerDuration(min)}
+                          >
+                            {min} minutes
+                          </MenuItem>
+                        )
+                      )}
+                    </Menu.Items>
+                  </Menu>
+                </div>
+              </Menu.Items>
+            </Menu>
+          </div>
+        </div>
+      )}
+
+      {/* Close Fullscreen Icon */}
       <HiOutlineChevronDown
         onClick={(e) => {
           e.stopPropagation();
           dispatch(setFullScreen(!fullScreen));
         }}
-        className={` absolute top-16 md:top-10 right-7 text-white text-3xl cursor-pointer ${
+        className={`absolute top-4 right-4 text-white text-3xl cursor-pointer ${
           fullScreen ? "" : "hidden"
         }`}
       />
+
       <FullscreenTrack
         handleNextSong={handleNextSong}
         handlePrevSong={handlePrevSong}
         activeSong={activeSong}
         fullScreen={fullScreen}
       />
-      <div className=" flex items-center justify-between pt-2">
+      <div className="flex items-center justify-between pt-2 w-full">
         <Track
           isPlaying={isPlaying}
           isActive={isActive}
@@ -240,7 +346,7 @@ const MusicPlayer = () => {
           <div
             className={`${
               fullScreen ? "" : "hidden"
-            }  sm:hidden flex items-center justify-center gap-4`}
+            } sm:hidden flex items-center justify-center gap-4`}
           >
             <FavouriteButton
               favouriteSongs={favouriteSongs}
@@ -308,7 +414,7 @@ const MusicPlayer = () => {
         />
       </div>
       {fullScreen && (
-        <div className=" lg:hidden">
+        <div className="lg:hidden">
           <Lyrics activeSong={activeSong} currentSongs={currentSongs} />
         </div>
       )}
