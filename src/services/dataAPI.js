@@ -20,7 +20,7 @@ export async function homePageData(language) {
 export async function getSongData(id) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/songs/${id}`
+      `https://proxymaster-1-q6640207.deta.app/fetch/${process.env.NEXT_PUBLIC_SAAVN_API}/api/songs/${id}`
     );
     const data = await response.json();
     console.log("song data", data);
@@ -34,7 +34,7 @@ export async function getSongData(id) {
 export async function getAlbumData(id) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/albums?id=${id}`
+      `https://proxymaster-1-q6640207.deta.app/fetch/${process.env.NEXT_PUBLIC_SAAVN_API}/api/albums?id=${id}`
     );
     const data = await response.json();
     return data?.data;
@@ -47,7 +47,7 @@ export async function getAlbumData(id) {
 export async function getplaylistData(id) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/playlists?id=${id}&limit=50`
+      `https://proxymaster-1-q6640207.deta.app/fetch/${process.env.NEXT_PUBLIC_SAAVN_API}/api/playlists?id=${id}&limit=50`
     );
     const data = await response.json();
     return data?.data;
@@ -60,7 +60,7 @@ export async function getplaylistData(id) {
 export async function getlyricsData(id) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/songs/${id}/lyrics`
+      `https://proxymaster-1-q6640207.deta.app/fetch/${process.env.NEXT_PUBLIC_SAAVN_API}/api/songs/${id}/lyrics`
     );
     const data = await response.json();
     return data;
@@ -73,7 +73,7 @@ export async function getlyricsData(id) {
 export async function getArtistData(id) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists?id=${id}`
+      `https://proxymaster-1-q6640207.deta.app/fetch/${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists?id=${id}`
     );
     const data = await response.json();
     return data?.data;
@@ -87,7 +87,7 @@ export async function getArtistSongs(id, page, sort) {
   try {
     const response = await fetch(
       // `${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists/${id}/songs?page=${page}&sortBy=${sort}`
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists/${id}/songs?page=${page}&`
+      `https://proxymaster-1-q6640207.deta.app/fetch/${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists/${id}/songs?page=${page}&`
     );
     const data = await response.json();
     return data?.data;
@@ -100,7 +100,7 @@ export async function getArtistSongs(id, page, sort) {
 export async function getArtistAlbums(id, page) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists/${id}/albums?page=${page}`
+      `https://proxymaster-1-q6640207.deta.app/fetch/${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists/${id}/albums?page=${page}`
     );
     const data = await response.json();
     return data?.data;
@@ -113,7 +113,7 @@ export async function getArtistAlbums(id, page) {
 export async function getSearchedData(query) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/search?query=${query}`
+      `https://proxymaster-1-q6640207.deta.app/fetch/${process.env.NEXT_PUBLIC_SAAVN_API}/api/search?query=${query}`
     );
     const data = await response.json();
     return data?.data;
@@ -196,10 +196,10 @@ export async function sendResetPasswordLink(email) {
 }
 
 // get  recommended songs
-export async function getRecommendedSongs(artistId, songId) {
+export async function getRecommendedSongs(artistId, id) {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/songs/${songId}/suggestions?limit=100`
+      `https://proxymaster-1-q6640207.deta.app/fetch/${process.env.NEXT_PUBLIC_SAAVN_API}/api/songs/${id}/suggestions?limit=100`
     );
     const data = await response.json();
     return data?.data;
