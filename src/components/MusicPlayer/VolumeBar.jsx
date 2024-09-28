@@ -39,6 +39,7 @@ const VolumeBar = ({
       toast.error(res?.message);
     }
   };
+  
   return (
     <>
       <div className="hidden lg:flex flex-1 items-center justify-end">
