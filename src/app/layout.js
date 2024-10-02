@@ -47,7 +47,9 @@ export default function RootLayout({ children }) {
         <meta property="og:type" content="website" />
         <link rel="canonical" href="https://echoplay.netlify.app/" />
         <meta name="robots" content="index, follow" />
+        <meta name="keywords" content="echoplay, echo play, music player,trending songs, 2024 best song plateform, 2024 latest songs,top songs.Hindi Songs Free Download, Bollywood Music, Hindi Movie Songs, Priyanka Chopra, Salman Khan, Katrina Kaif, Sonu Nigam, Honey Singh, Udit Narayan, Shah Rukh Khan, Aamir Khan"></meta>
         <meta name="google-site-verification" content="vBxvC-ztGC2krNZlGJ43xlR6IeF63fYC3cW_0Hn4jy0" />
+        <meta name="google-adsense-account" content="ca-pub-6828937410766897"></meta>
         <link rel="icon" href={Favicon.src} />
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-Z4FJ5T627Q"></Script>
         <Script>
@@ -58,6 +60,8 @@ export default function RootLayout({ children }) {
             gtag('config', 'G-Z4FJ5T627Q');
           `}
         </Script>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6828937410766897"
+     crossorigin="anonymous"></script>
       </head>
       <body className={poppins.className}>
         <Providers>
