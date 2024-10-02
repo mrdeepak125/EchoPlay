@@ -23,7 +23,7 @@ export const metadata = {
   description: "Music streaming app",
   image:
     "https://res.cloudinary.com/djdi5hkyx/image/upload/v1722598011/logo-white_cdtrzl.png",
-  url: "https://echoplay.netlify.app/",
+  url: "https://echoplay.vercel.app/",
   type: "website",
   icons: [{ rel: "icon", url: Favicon.src }],
   site_name: "EchoPlay",
@@ -45,6 +45,7 @@ export default function RootLayout({ children }) {
         <meta property="og:image" content="https://res.cloudinary.com/djdi5hkyx/image/upload/v1722598011/logo-white_cdtrzl.png" />
         <meta property="og:url" content="https://echoplay.netlify.app/" />
         <meta property="og:type" content="website" />
+        <meta property="og:keywords" content="echoplay, echo play, music player,trending songs, 2024 best song plateform, 2024 latest songs,top songs.Hindi Songs Free Download, Bollywood Music, Hindi Movie Songs, Priyanka Chopra, Salman Khan, Katrina Kaif, Sonu Nigam, Honey Singh, Udit Narayan, Shah Rukh Khan, Aamir Khan" />
         <link rel="canonical" href="https://echoplay.netlify.app/" />
         <meta name="robots" content="index, follow" />
         <meta name="keywords" content="echoplay, echo play, music player,trending songs, 2024 best song plateform, 2024 latest songs,top songs.Hindi Songs Free Download, Bollywood Music, Hindi Movie Songs, Priyanka Chopra, Salman Khan, Katrina Kaif, Sonu Nigam, Honey Singh, Udit Narayan, Shah Rukh Khan, Aamir Khan"></meta>
