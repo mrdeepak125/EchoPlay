@@ -75,6 +75,7 @@ const SongsList = ({
 
   const handleDelete = (songId) => {
     onDelete(songId);
+    toast.success("Delete Successfully");
     setShowMenu(null); // Close the menu after deletion
   };
 
