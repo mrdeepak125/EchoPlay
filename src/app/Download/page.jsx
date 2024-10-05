@@ -45,7 +45,6 @@ const Page = () => {
     );
   };
 
-  // Redirect if user is not authenticated
   if (status === "loading") {
     return (
       <div className="w-screen h-screen flex justify-center items-center">
@@ -53,6 +52,7 @@ const Page = () => {
       </div>
     );
   }
+  
   if (status === "unauthenticated") {
     redirect("/login");
   }
@@ -64,12 +64,13 @@ const Page = () => {
         <h1 className="text-xl font-semibold mt-10">No Saved Songs</h1>
       ) : (
         <SongsList
-          SongData={savedSongs}
-          onPlay={handlePlaySong}
-          onDelete={handleDeleteSong}
-          loading={loading}
-          song={playingSong}
-        />
+        SongData={savedSongs}
+        onPlay={handlePlaySong}
+        onDelete={handleDeleteSong}
+        loading={loading}
+        song={playingSong}
+        isDownloadSection={true} // Pass true for download section
+      />
       )}
     </div>
   );
