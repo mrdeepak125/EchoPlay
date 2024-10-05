@@ -37,7 +37,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <title>EchoPlay</title>
         <meta name="description" content="Create your own Playlists and add songs to Favourite. Trending songs." />
         <meta property="og:title" content="EchoPlay | Music Streaming App" />
@@ -62,7 +62,7 @@ export default function RootLayout({ children }) {
           `}
         </Script>
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6828937410766897"
-     crossorigin="anonymous"></script>
+     crossOrigin="anonymous"></script>
       </head>
       <body className={poppins.className}>
         <Providers>
@@ -80,17 +80,6 @@ export default function RootLayout({ children }) {
             </div>
           </AuthProvider>
         </Providers>
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6828937410766897"
-            crossorigin="anonymous"></script>
-        <ins class="adsbygoogle"
-            style="display:block"
-            data-ad-client="ca-pub-6828937410766897"
-            data-ad-slot="8339888622"
-            data-ad-format="auto"
-            data-full-width-responsive="true"></ins>
-        <script>
-            (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
       </body>
     </html>
   );
