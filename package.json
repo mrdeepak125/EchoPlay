@@ -18,10 +18,7 @@
     "axios": "^1.4.0",
     "bcryptjs": "^2.4.3",
     "browser-fs-access": "^0.35.0",
-<<<<<<< HEAD
     "caniuse-lite": "^1.0.30001667",
-=======
->>>>>>> 7e87fc53e11de061f1f2f5a7317415c46ad4b89f
     "crypto": "^1.0.1",
     "eslint-config-next": "^14.2.1",
     "extract-colors": "^4.0.2",
@@ -32,11 +29,7 @@
     "mongodb": "^6.8.0",
     "mongoose": "^7.4.1",
     "next": "^14.2.5",
-<<<<<<< HEAD
     "next-auth": "^4.24.8",
-=======
-    "next-auth": "^4.22.3",
->>>>>>> 7e87fc53e11de061f1f2f5a7317415c46ad4b89f
     "nodemailer": "^6.9.14",
     "postcss": "8.4.31",
     "react": "^18.3.1",
