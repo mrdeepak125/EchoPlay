@@ -3,7 +3,10 @@ import logoWhite from "../../assets/logoWhite.png";
 import Languages from "./Languages";
 import Favourites from "./Favourites";
 import { FaGithub } from "react-icons/fa";
+<<<<<<< HEAD
 import { BiSolidDonateHeart } from "react-icons/bi";
+=======
+>>>>>>> 7e87fc53e11de061f1f2f5a7317415c46ad4b89f
 import { MdOutlineMenu } from "react-icons/md";
 import Image from "next/image";
 import Link from "next/link";
@@ -48,7 +51,11 @@ const Sidebar = ({ showNav, setShowNav }) => {
           <hr className="border-gray-400 w-[95%] mx-auto" />
         </div>
         <Favourites setShowNav={setShowNav} />
+<<<<<<< HEAD
         {/* <Download setShowNav={setShowNav} /> */}
+=======
+        <Download setShowNav={setShowNav} />
+>>>>>>> 7e87fc53e11de061f1f2f5a7317415c46ad4b89f
         <div className="flex flex-col gap-1">
           <hr className="border-gray-400 w-[95%] mx-auto" />
           <Playlists setShowNav={setShowNav} />
@@ -71,6 +78,7 @@ const Sidebar = ({ showNav, setShowNav }) => {
             Github
           </p>
         </a>
+<<<<<<< HEAD
         <a
           href="https://ko-fi.com/kamiflix"
           target="_blank"
@@ -81,6 +89,8 @@ const Sidebar = ({ showNav, setShowNav }) => {
             Donate 
           </p>
         </a>
+=======
+>>>>>>> 7e87fc53e11de061f1f2f5a7317415c46ad4b89f
       </div>
     </div>
   );

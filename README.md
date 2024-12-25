@@ -11,6 +11,11 @@ This is a free music streaming web application built with Next.js and powered by
 * Display song details such as title, artist, album, and album artwork.
 * Responsive and mobile-friendly design for a great user experience.
 * Minimalistic and intuitive user interface.
+<<<<<<< HEAD
+=======
+* Add Sleep timer stop song in time limit.
+* Download song in device
+>>>>>>> 7e87fc53e11de061f1f2f5a7317415c46ad4b89f
 ***
 ![image](https://res.cloudinary.com/djdi5hkyx/image/upload/v1722598299/Screenshot_2024-08-02_170023_zc8idt.png)
 ___
