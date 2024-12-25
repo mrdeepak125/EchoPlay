@@ -78,7 +78,7 @@ const Sidebar = ({ showNav, setShowNav }) => {
         >
           <p className=" hover:border border-gray-200 p-1 font-medium w-fit rounded cursor-pointer text-sm flex items-center gap-1">
             <BiSolidDonateHeart />
-            Donate
+            Donate 
           </p>
         </a>
       </div>
