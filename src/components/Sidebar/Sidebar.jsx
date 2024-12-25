@@ -3,6 +3,7 @@ import logoWhite from "../../assets/logoWhite.png";
 import Languages from "./Languages";
 import Favourites from "./Favourites";
 import { FaGithub } from "react-icons/fa";
+import { BiSolidDonateHeart } from "react-icons/bi";
 import { MdOutlineMenu } from "react-icons/md";
 import Image from "next/image";
 import Link from "next/link";
@@ -47,7 +48,7 @@ const Sidebar = ({ showNav, setShowNav }) => {
           <hr className="border-gray-400 w-[95%] mx-auto" />
         </div>
         <Favourites setShowNav={setShowNav} />
-        <Download setShowNav={setShowNav} />
+        {/* <Download setShowNav={setShowNav} /> */}
         <div className="flex flex-col gap-1">
           <hr className="border-gray-400 w-[95%] mx-auto" />
           <Playlists setShowNav={setShowNav} />
@@ -68,6 +69,16 @@ const Sidebar = ({ showNav, setShowNav }) => {
           <p className=" hover:border border-gray-200 p-1 font-medium w-fit rounded cursor-pointer text-sm flex items-center gap-1">
             <FaGithub />
             Github
+          </p>
+        </a>
+        <a
+          href="https://ko-fi.com/kamiflix"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <p className=" hover:border border-gray-200 p-1 font-medium w-fit rounded cursor-pointer text-sm flex items-center gap-1">
+            <BiSolidDonateHeart />
+            Donate
           </p>
         </a>
       </div>
