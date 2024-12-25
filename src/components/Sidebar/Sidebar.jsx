@@ -72,13 +72,13 @@ const Sidebar = ({ showNav, setShowNav }) => {
           </p>
         </a>
         <a
-          href="https://github.com/mrdeepak125/EchoPlay"
+          href="https://ko-fi.com/kamiflix"
           target="_blank"
           rel="noreferrer"
         >
           <p className=" hover:border border-gray-200 p-1 font-medium w-fit rounded cursor-pointer text-sm flex items-center gap-1">
             <BiSolidDonateHeart />
-            Github
+            Donate 
           </p>
         </a>
       </div>
