@@ -15,9 +15,10 @@ const Track = ({ isPlaying, isActive, activeSong, fullScreen }) => (
       <img
         src={
           activeSong?.image?.[2].url ||
-          "https://res.cloudinary.com/dbr73rpz9/image/upload/v1690447758/chibi_qxvxq6.png"
+          "https://res.cloudinary.com/djdi5hkyx/image/upload/v1743319920/ukr7gg6vkmlhf4rfg9qh.jpg"
         }
         alt="cover art"
+        draggable="false"
         className="rounded-full h-full"
       />
     </div>
