@@ -61,6 +61,7 @@ export default function RootLayout({ children }) {
             gtag('config', 'G-Z4FJ5T627Q');
           `}
         </Script>
+          <script defer src="https://cloud.umami.is/script.js" data-website-id="62d42cd1-d6ec-4cf2-9588-c01ebd312689"></script>
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6828937410766897"
      crossOrigin="anonymous"></script>
       </head>
