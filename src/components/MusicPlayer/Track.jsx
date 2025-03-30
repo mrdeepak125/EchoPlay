@@ -6,7 +6,7 @@ const Track = ({ isPlaying, isActive, activeSong, fullScreen }) => (
     className={`flex-1 flex items-center justify-start ${
       fullScreen ? "hidden" : ""
     }`}
-  >
+  > 
     <div
       className={`${
         isPlaying && isActive ? "animate-[spin_15s_linear_infinite]" : ""
