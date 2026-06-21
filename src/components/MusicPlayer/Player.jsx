@@ -1,6 +1,9 @@
 "use client";
 /* eslint-disable jsx-a11y/media-has-caption */
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { getQualityUrl } from "@/redux/features/audioQualitySlice";
+import { get } from "idb-keyval";
 
 const Player = ({
   activeSong,
@@ -18,87 +21,105 @@ const Player = ({
   appTime,
 }) => {
   const ref = useRef(null);
-  // eslint-disable-next-line no-unused-expressions
-  if (ref.current) {
+  const { quality } = useSelector((state) => state.audioQuality || { quality: "high" });
+  const [localUrl, setLocalUrl] = useState("");
+
+  useEffect(() => {
+    let url = "";
+    const checkOffline = async () => {
+      if (activeSong?.id) {
+        try {
+          const storedSong = await get(activeSong.id);
+          if (storedSong?.audioData) {
+            const blob = new Blob([storedSong.audioData], { type: "audio/mpeg" });
+            url = URL.createObjectURL(blob);
+            setLocalUrl(url);
+            return;
+          }
+        } catch (error) {
+          console.error("Error loading offline song:", error);
+        }
+      }
+      setLocalUrl("");
+    };
+    checkOffline();
+    return () => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [activeSong]);
+
+  // Get correct audio URL based on selected quality or local storage
+  const audioSrc = localUrl || (
+    activeSong?.isYoutube || activeSong?.source === "youtube"
+      ? activeSong?.url
+      : (activeSong?.downloadUrl ? getQualityUrl(activeSong.downloadUrl, quality) : "")
+  );
+  // Play / pause control
+  useEffect(() => {
+    if (!ref.current) return;
     if (isPlaying) {
-      ref.current.play();
+      const playPromise = ref.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          // Auto-play was prevented; just log
+          console.warn("Autoplay prevented:", err);
+        });
+      }
     } else {
       ref.current.pause();
     }
-  }
+  }, [isPlaying]);
 
-  // media session metadata:
-  const mediaMetaData = activeSong.name
+  // Volume
+  useEffect(() => {
+    if (ref.current) ref.current.volume = volume;
+  }, [volume]);
+
+  // Seek
+  useEffect(() => {
+    if (ref.current && !isNaN(seekTime)) ref.current.currentTime = seekTime;
+  }, [seekTime]);
+
+  // Media session metadata
+  const mediaMetaData = activeSong?.name
     ? {
         title: activeSong?.name,
         artist: activeSong?.primaryArtists,
-        // album: activeSong?.album.name,
         artwork: [
           {
-            src: activeSong.image[2]?.url,
+            src: activeSong?.image?.[2]?.url,
             sizes: "500x500",
             type: "image/jpg",
           },
         ],
       }
     : {};
+
   useEffect(() => {
-    // Check if the Media Session API is available in the browser environment
     if ("mediaSession" in navigator) {
-      // Set media metadata
       navigator.mediaSession.metadata = new window.MediaMetadata(mediaMetaData);
-
-      // Define media session event handlers
-      navigator.mediaSession.setActionHandler("play", onPlay);
-      navigator.mediaSession.setActionHandler("pause", onPause);
-      navigator.mediaSession.setActionHandler("previoustrack", onPreviousTrack);
-      navigator.mediaSession.setActionHandler("nexttrack", onNextTrack);
-      navigator.mediaSession.setActionHandler("seekbackward", () => {
-        setSeekTime(appTime - 5);
-      });
-      navigator.mediaSession.setActionHandler("seekforward", () => {
-        setSeekTime(appTime + 5);
-      });
+      navigator.mediaSession.setActionHandler("play", () => handlePlayPause());
+      navigator.mediaSession.setActionHandler("pause", () => handlePlayPause());
+      navigator.mediaSession.setActionHandler("previoustrack", () => handlePrevSong());
+      navigator.mediaSession.setActionHandler("nexttrack", () => handleNextSong());
+      navigator.mediaSession.setActionHandler("seekbackward", () => setSeekTime(appTime - 5));
+      navigator.mediaSession.setActionHandler("seekforward", () => setSeekTime(appTime + 5));
     }
-  }, [mediaMetaData]);
-  // media session handlers:
-  const onPlay = () => {
-    handlePlayPause();
-  };
-
-  const onPause = () => {
-    handlePlayPause();
-  };
-
-  const onPreviousTrack = () => {
-    handlePrevSong();
-  };
-
-  const onNextTrack = () => {
-    handleNextSong();
-  };
-
-  useEffect(() => {
-    ref.current.volume = volume;
-  }, [volume]);
-  // updates audio element only on seekTime change (and not on each rerender):
-  useEffect(() => {
-    ref.current.currentTime = seekTime;
-  }, [seekTime]);
-
-  console.clear()
+  }, [activeSong]);
 
   return (
-    <>
-      <audio
-        src={activeSong?.downloadUrl?.[4]?.url}
-        ref={ref}
-        loop={repeat}
-        onEnded={onEnded}
-        onTimeUpdate={onTimeUpdate}
-        onLoadedData={onLoadedData}
-      />
-    </>
+    <audio
+      key={audioSrc}
+      src={audioSrc}
+      ref={ref}
+      loop={repeat}
+      onEnded={onEnded}
+      onTimeUpdate={onTimeUpdate}
+      onLoadedData={onLoadedData}
+      preload="auto"
+    />
   );
 };
 

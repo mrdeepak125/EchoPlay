@@ -11,6 +11,15 @@ module.exports = {
       md: '768px',
       lg: '1024px',
     },
+    extend: {
+      colors: {
+        accent: {
+          primary: 'var(--accent-primary)',
+          secondary: 'var(--accent-secondary)',
+          glow: 'var(--accent-glow)',
+        }
+      }
+    }
   },
   plugins: [],
 }

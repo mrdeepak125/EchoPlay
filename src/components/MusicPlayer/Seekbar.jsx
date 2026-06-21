@@ -2,29 +2,87 @@ import React from 'react';
 import { GiFastBackwardButton, GiFastForwardButton } from 'react-icons/gi';
 
 const Seekbar = ({ value, min, max, onInput, setSeekTime, appTime, fullScreen }) => {
-  // converts the time to format 0:00
-  const getTime = (time) => `${Math.floor(time / 60)}:${(`0${Math.floor(time % 60)}`).slice(-2)}`;
+  const getTime = (time) =>
+    `${Math.floor(time / 60)}:${(`0${Math.floor(time % 60)}`).slice(-2)}`;
 
-  console.clear()
+  const progress = max > 0 ? (value / max) * 100 : 0;
 
   return (
-    <div className={` ${!fullScreen ? 'hidden sm:flex':' flex mt-5'}   flex-row items-center`}>
-      <button type="button" onClick={(e) =>{e.stopPropagation(); setSeekTime(appTime - 5)}} className="hidden lg:mr-4 lg:block text-white">
-        <GiFastBackwardButton size={20} className=' text-gray-300' />
+    <div className={`${!fullScreen ? 'hidden sm:flex' : 'flex mt-5'} flex-row items-center gap-2`}>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setSeekTime(appTime - 5); }}
+        className="hidden lg:block"
+        style={{
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "8px",
+          color: "rgba(255,255,255,0.7)",
+          padding: "4px 8px",
+          cursor: "pointer",
+          transition: "all 0.2s",
+        }}
+      >
+        <GiFastBackwardButton size={16} />
       </button>
-      <p className="text-white text-xs sm:text-base w-5">{value === 0 ? '0:00' : getTime(value)}</p>
-      <input onClick={(event) => {event.stopPropagation();}}
-        type="range"
-        step="any"
-        value={value}
-        min={min}
-        max={max}
-        onInput={onInput}
-        className="md:block w-[70vw] md:w-[650px] 2xl:w-[50vw] h-1 mx-4 2xl:mx-6 rounded-lg accent-[#ff6cab] cursor-pointer"
-      />
-      <p className="text-white text-xs sm:text-base">{max === 0 ? '0:00' : getTime(max)}</p>
-      <button type="button" onClick={(e) =>{e.stopPropagation(); setSeekTime(appTime + 5)}} className="hidden lg:ml-4 lg:block text-white">
-        <GiFastForwardButton size={20} className=' text-gray-300 ' />
+
+      <p style={{
+        color: "#94a3b8",
+        fontSize: "12px",
+        minWidth: "32px",
+        textAlign: "right",
+        fontVariantNumeric: "tabular-nums",
+      }}>
+        {value === 0 ? '0:00' : getTime(value)}
+      </p>
+
+      <div style={{ position: "relative", flex: 1, maxWidth: "650px" }}>
+        <input
+          onClick={(e) => e.stopPropagation()}
+          type="range"
+          step="any"
+          value={value}
+          min={min}
+          max={max || 1}
+          onInput={onInput}
+          style={{
+            WebkitAppearance: "none",
+            appearance: "none",
+            width: "100%",
+            height: "4px",
+            borderRadius: "2px",
+            outline: "none",
+            cursor: "pointer",
+            background: `linear-gradient(to right, #a855f7 ${progress}%, rgba(255,255,255,0.15) ${progress}%)`,
+            transition: "background 0.1s",
+          }}
+          className="glass-slider w-full"
+        />
+      </div>
+
+      <p style={{
+        color: "#64748b",
+        fontSize: "12px",
+        minWidth: "32px",
+        fontVariantNumeric: "tabular-nums",
+      }}>
+        {max === 0 ? '0:00' : getTime(max)}
+      </p>
+
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setSeekTime(appTime + 5); }}
+        className="hidden lg:block"
+        style={{
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "8px",
+          color: "rgba(255,255,255,0.7)",
+          padding: "4px 8px",
+          cursor: "pointer",
+        }}
+      >
+        <GiFastForwardButton size={16} />
       </button>
     </div>
   );

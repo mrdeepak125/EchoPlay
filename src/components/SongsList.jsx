@@ -88,13 +88,13 @@ const SongsList = ({
               key={song?.id}
               onClick={() => handlePlayClick(song, index)}
               className={`flex items-center mt-5 cursor-pointer group border-b-[1px] border-gray-400 justify-between ${
-                activeSong?.id === song?.id && " text-[#ff6cab]"
+                activeSong?.id === song?.id && " text-accent-primary"
               }`}
             >
               <div className="flex items-center gap-5">
                 <div className="relative mb-3">
                   <img
-                    src={song?.image?.[2]?.url}
+                    src={song?.localImage || song?.image?.[2]?.url || song?.image?.[1]?.url || song?.image?.[0]?.url}
                     alt={song?.name}
                     width={50}
                     height={50}
@@ -103,7 +103,7 @@ const SongsList = ({
                   {activeSong?.id === song?.id ? (
                     <BiHeadphone
                       size={27}
-                      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[#ff6cab]"
+                      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-accent-primary"
                     />
                   ) : (
                     <BsPlayFill

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   nextSong,
@@ -23,9 +23,11 @@ import { addFavourite, getFavourite } from "@/services/dataAPI";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import FavouriteButton from "./FavouriteButton";
-import getPixels from "get-pixels";
-import { extractColors } from "extract-colors";
 import { get } from "idb-keyval";
+import { useSelector as useQualitySelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
+import { IoClose } from "react-icons/io5";
 
 const MusicPlayer = () => {
   const {
@@ -47,63 +49,61 @@ const MusicPlayer = () => {
   const [loading, setLoading] = useState(false);
   const [songStopCount, setSongStopCount] = useState(null);
   const [songsPlayed, setSongsPlayed] = useState(0);
-  const [sleepTimer, setSleepTimer] = useState(null);
-  const [sleepTimerId, setSleepTimerId] = useState(null);
+  const [sleepTimeRemaining, setSleepTimeRemaining] = useState(0); // in seconds
+  const [showTimerModal, setShowTimerModal] = useState(false);
+  const [customNCount, setCustomNCount] = useState(5);
+  const [customMinutes, setCustomMinutes] = useState(15);
+  const [bgColor, setBgColor] = useState(null);
   const dispatch = useDispatch();
   const { status } = useSession();
   const router = useRouter();
-  const [bgColor, setBgColor] = useState();
 
+  // Auto-play when song changes
   useEffect(() => {
     if (currentSongs?.length) dispatch(playPause(true));
   }, [currentIndex, dispatch, currentSongs]);
 
+  // Fetch favourites & extract bg color on song change
   useEffect(() => {
     const fetchFavourites = async () => {
       try {
         setLoading(true);
         const res = await getFavourite();
-        if (res) {
-          setFavouriteSongs(res);
-        }
+        if (res) setFavouriteSongs(res);
         setLoading(false);
-      } catch (error) {
+      } catch {
         setLoading(false);
       }
     };
     fetchFavourites();
 
-    const src = activeSong?.image?.[1]?.url;
-
-    if (src) {
-      getPixels(src, (err, pixels) => {
-        if (!err) {
-          const data = [...pixels.data];
-          const width = Math.round(Math.sqrt(data.length / 4));
-          const height = width;
-
-          extractColors({ data, width, height })
-            .then((colors) => {
-              setBgColor(colors[0]);
-            })
-            .catch(console.log);
-        }
-      });
+    // Extract dominant color from artwork
+    if (activeSong?.image?.[1]?.url) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = activeSong.image[1].url;
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = canvas.height = 10;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, 10, 10);
+          const d = ctx.getImageData(0, 0, 10, 10).data;
+          setBgColor({ red: d[0], green: d[1], blue: d[2] });
+        } catch {}
+      };
     }
 
-    if (activeSong?.name) {
-      document.title = activeSong?.name;
-    }
+    if (activeSong?.name) document.title = activeSong.name + " — EchoPlay";
   }, [activeSong]);
 
+  // Lock scroll in fullscreen
   useEffect(() => {
     document.documentElement.style.overflow = fullScreen ? "hidden" : "auto";
-
-    return () => {
-      document.documentElement.style.overflow = "auto";
-    };
+    return () => { document.documentElement.style.overflow = "auto"; };
   }, [fullScreen]);
 
+  // Spacebar play/pause
   const handleKeyPress = useCallback(
     (event) => {
       if (!isTyping && (event.keyCode === 32 || event.key === " ")) {
@@ -113,24 +113,15 @@ const MusicPlayer = () => {
     },
     [isTyping]
   );
-
   useEffect(() => {
     document.addEventListener("keydown", handleKeyPress);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyPress);
-    };
+    return () => document.removeEventListener("keydown", handleKeyPress);
   }, [handleKeyPress]);
 
   const handlePlayPause = (e) => {
     e?.stopPropagation();
     if (!isActive) return;
-
-    if (isPlaying) {
-      dispatch(playPause(false));
-    } else {
-      dispatch(playPause(true));
-    }
+    dispatch(playPause(!isPlaying));
   };
 
   const handleNextSong = useCallback(
@@ -172,8 +163,8 @@ const MusicPlayer = () => {
     if (status === "unauthenticated") {
       dispatch(setFullScreen(false));
       router.push("/login");
+      return;
     }
-
     if (favsong?.id && status === "authenticated") {
       try {
         setLoading(true);
@@ -183,158 +174,152 @@ const MusicPlayer = () => {
           setFavouriteSongs([...favouriteSongs, favsong.id]);
         }
         const res = await addFavourite(favsong);
-        if (res?.success === true) {
-          setFavouriteSongs(res?.data?.favourites);
-        }
+        if (res?.success === true) setFavouriteSongs(res?.data?.favourites);
         setLoading(false);
-      } catch (error) {
+      } catch {
         setLoading(false);
-        console.log("add to fav error", error);
       }
     }
   };
 
+  // Check for downloaded song
   useEffect(() => {
     const fetchDownloadedSong = async () => {
       const downloadedSong = await get(activeSong.id);
-      if (downloadedSong && downloadedSong.isDownloaded) {
-        dispatch(
-          playPause({
-            ...activeSong,
-            downloadUrl: downloadedSong.downloadUrl,
-          })
-        );
+      if (downloadedSong?.isDownloaded) {
+        dispatch(playPause({ ...activeSong, downloadUrl: downloadedSong.downloadUrl }));
       }
     };
-
-    if (activeSong?.id) {
-      fetchDownloadedSong();
-    }
+    if (activeSong?.id) fetchDownloadedSong();
   }, [activeSong, dispatch]);
 
+  // Sleep timer countdown effect
   useEffect(() => {
-    if (sleepTimerId) {
-      clearTimeout(sleepTimerId);
-    }
-    if (sleepTimer) {
-      const timerId = setTimeout(() => {
-        dispatch(playPause(false));
-        setSleepTimer(null);
-      }, sleepTimer * 60 * 1000);
-      setSleepTimerId(timerId);
+    let intervalId;
+    if (sleepTimeRemaining > 0) {
+      intervalId = setInterval(() => {
+        setSleepTimeRemaining((prev) => {
+          if (prev <= 1) {
+            dispatch(playPause(false));
+            toast.success("Sleep timer completed! Playback stopped.");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     }
     return () => {
-      if (sleepTimerId) {
-        clearTimeout(sleepTimerId);
-      }
+      if (intervalId) clearInterval(intervalId);
     };
-  }, [sleepTimer, dispatch]);
+  }, [sleepTimeRemaining, dispatch]);
 
-  const handleTimerClick = (e) => {
-    e.stopPropagation();
-  };
-
-  const setStopAfterNSongs = () => {
-    const userInput = prompt("Enter number of songs to play before stopping:");
-    const count = parseInt(userInput, 10);
-    if (!isNaN(count) && count > 0) {
+  const setStopAfterNSongs = (count) => {
+    if (count > 0) {
       setSongStopCount(count);
       setSongsPlayed(0);
-      alert(`Playback will stop after ${count} song(s).`);
-    } else {
-      alert("Please enter a valid number greater than 0.");
+      toast.success(`Playback will stop after ${count} songs`);
     }
   };
 
   const setSleepTimerDuration = (minutes) => {
-    setSleepTimer(minutes);
-    alert(`Sleep timer set for ${minutes} minutes.`);
+    setSleepTimeRemaining(minutes * 60);
+    toast.success(`Sleep timer set for ${minutes} minutes`);
   };
 
-  console.clear();
+  const cancelTimer = () => {
+    setSleepTimeRemaining(0);
+    toast.success("Sleep timer cancelled");
+  };
+
+  const cancelStopCount = () => {
+    setSongStopCount(null);
+    setSongsPlayed(0);
+    toast.success("Song limit cancelled");
+  };
+
+  const formatTimeRemaining = (seconds) => {
+    if (seconds <= 0) return "";
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}m ${s.toString().padStart(2, "0")}s`;
+  };
+
+  const bgRgba = bgColor
+    ? `rgba(${bgColor.red}, ${bgColor.green}, ${bgColor.blue}, 0.25)`
+    : "rgba(12,10,28,0.92)";
 
   return (
     <div
-      className={`relative overflow-scroll items-center lg:items-stretch lg:overflow-visible hideScrollBar sm:px-12  flex flex-col transition-all duration-100 ${
-        fullScreen ? "h-[100vh] w-[100vw]" : "w-full h-20 px-8 bg-black "
+      className={`items-center lg:items-stretch hideScrollBar flex flex-col transition-all duration-300 ${
+        fullScreen 
+          ? "fixed inset-0 h-[100vh] w-[100vw] overflow-y-auto z-[60] px-4 sm:px-12 pt-6 pb-24" 
+          : "relative mx-auto w-[94%] md:w-[90%] max-w-6xl h-[76px] rounded-2xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.55)] overflow-hidden px-4 mb-3"
       }`}
       onClick={() => {
-        if (activeSong?.id) {
-          dispatch(setFullScreen(!fullScreen));
-        }
+        if (activeSong?.id) dispatch(setFullScreen(!fullScreen));
       }}
       style={{
-        backgroundColor: bgColor
-          ? `rgba(${bgColor.red}, ${bgColor.green}, ${bgColor.blue}, 0.2)`
-          : "rgba(0,0,0,0.2)",
+        backgroundColor: bgRgba,
+        backdropFilter: "blur(40px)",
+        WebkitBackdropFilter: "blur(40px)",
       }}
     >
-      {/* Top Icons */}
+      {/* Fullscreen top controls */}
       {fullScreen && (
-        <div className="absolute top-4 left-4 flex items-center space-x-4 z-10">
-          {/* Timer Icon and Menu */}
-          <div onClick={handleTimerClick}>
-            <Menu as="div" className="relative inline-block text-left">
-              <MenuButton
-                className="flex items-center text-white text-3xl focus:outline-none"
-                aria-label="Timer Options"
-              >
-                <MdOutlineTimer />
-                <IoMdArrowDropdown className="ml-1 text-2xl" />
-              </MenuButton>
-              <Menu.Items className="absolute mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
-                <div className="py-1">
-                  <MenuItem
-                    as="button"
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={setStopAfterNSongs}
-                  >
-                    Stop after N songs
-                  </MenuItem>
-                  <Menu as="div" className="relative">
-                    <MenuButton className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex justify-between items-center">
-                      Sleep Timer
-                      <IoMdArrowDropdown />
-                    </MenuButton>
-                    <Menu.Items className="absolute left-full top-0 mt-12 -ml-20 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30">
-                      {[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].map(
-                        (min) => (
-                          <MenuItem
-                            key={min}
-                            as="button"
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            onClick={() => setSleepTimerDuration(min)}
-                          >
-                            {min} minutes
-                          </MenuItem>
-                        )
-                      )}
-                    </Menu.Items>
-                  </Menu>
-                </div>
-              </Menu.Items>
-            </Menu>
+        <div className="absolute top-4 left-4 flex items-center space-x-3 z-10">
+          <div onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowTimerModal(true); }}
+              className="flex items-center text-white text-2xl focus:outline-none hover:bg-white/15 transition-all"
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: "10px",
+                padding: "6px 12px",
+              }}
+              title="Set Sleep Timer"
+            >
+              <MdOutlineTimer />
+              {(sleepTimeRemaining > 0 || songStopCount !== null) && (
+                <span className="ml-2 w-2.5 h-2.5 rounded-full bg-pink-500 animate-pulse" />
+              )}
+            </button>
           </div>
+          {sleepTimeRemaining > 0 && (
+            <div className="text-xs font-semibold text-gray-300 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl backdrop-blur-md">
+              😴 Sleep: {formatTimeRemaining(sleepTimeRemaining)}
+            </div>
+          )}
+          {songStopCount !== null && (
+            <div className="text-xs font-semibold text-gray-300 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl backdrop-blur-md">
+              🛑 Stop: {songStopCount - songsPlayed} left
+            </div>
+          )}
         </div>
       )}
 
-      {/* Close Fullscreen Icon */}
-      <HiOutlineChevronDown
-        onClick={(e) => {
-          e.stopPropagation();
-          dispatch(setFullScreen(!fullScreen));
-        }}
-        className={`absolute top-4 right-4 text-white text-3xl cursor-pointer ${
-          fullScreen ? "" : "hidden"
-        }`}
-      />
+      {/* Close fullscreen */}
+      {fullScreen && (
+        <HiOutlineChevronDown
+          onClick={(e) => { e.stopPropagation(); dispatch(setFullScreen(false)); }}
+          className="absolute top-4 right-4 text-white text-3xl cursor-pointer z-10"
+          style={{
+            background: "rgba(255,255,255,0.08)",
+            borderRadius: "50%",
+            padding: "4px",
+          }}
+        />
+      )}
 
+      {/* Fullscreen art + swipe */}
       <FullscreenTrack
         handleNextSong={handleNextSong}
         handlePrevSong={handlePrevSong}
         activeSong={activeSong}
         fullScreen={fullScreen}
       />
+
+      {/* Mini player + controls row */}
       <div className="flex items-center justify-between pt-2 w-full">
         <Track
           isPlaying={isPlaying}
@@ -343,23 +328,21 @@ const MusicPlayer = () => {
           fullScreen={fullScreen}
         />
         <div className="flex-1 flex flex-col items-center justify-center">
-          <div
-            className={`${
-              fullScreen ? "" : "hidden"
-            } sm:hidden flex items-center justify-center gap-4`}
-          >
-            <FavouriteButton
-              favouriteSongs={favouriteSongs}
-              activeSong={activeSong}
-              loading={loading}
-              handleAddToFavourite={handleAddToFavourite}
-              style={"mb-4"}
-            />
-            <div className={`mb-3 sm:hidden flex items-center justify-center`}>
+          {/* Mobile fav + download in fullscreen */}
+          <div className={`${fullScreen ? "" : "hidden"} sm:hidden flex items-center justify-center gap-4`}>
+            {!(activeSong?.isYoutube || activeSong?.source === "youtube") && (
+              <FavouriteButton
+                favouriteSongs={favouriteSongs}
+                activeSong={activeSong}
+                loading={loading}
+                handleAddToFavourite={handleAddToFavourite}
+                style="mb-4"
+              />
+            )}
+            <div className="mb-3 sm:hidden flex items-center justify-center">
               <Downloader activeSong={activeSong} fullScreen={fullScreen} />
             </div>
-          </div>
-          <Controls
+          </div>          <Controls
             isPlaying={isPlaying}
             isActive={isActive}
             repeat={repeat}
@@ -385,6 +368,7 @@ const MusicPlayer = () => {
             setSeekTime={setSeekTime}
             appTime={appTime}
           />
+          {/* The persistent audio element — key change forces reload only on song change */}
           <Player
             activeSong={activeSong}
             volume={volume}
@@ -413,11 +397,165 @@ const MusicPlayer = () => {
           setVolume={setVolume}
         />
       </div>
+
+      {/* Lyrics in fullscreen on mobile */}
       {fullScreen && (
         <div className="lg:hidden">
           <Lyrics activeSong={activeSong} currentSongs={currentSongs} />
         </div>
       )}
+
+      {/* Sleep Timer & Stop Count Glass Modal */}
+      <AnimatePresence>
+        {showTimerModal && (
+          <div 
+            onClick={(e) => { e.stopPropagation(); setShowTimerModal(false); }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="glass-card w-full max-w-md p-6 overflow-hidden relative"
+              style={{
+                background: "rgba(15,15,30,0.95)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+              }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <MdOutlineTimer className="text-[#a855f7]" style={{ color: "var(--accent-primary)" }} />
+                  <span>Playback Timer Options</span>
+                </h3>
+                <button
+                  onClick={() => setShowTimerModal(false)}
+                  className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+                >
+                  <IoClose size={22} />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="space-y-6">
+                
+                {/* Sleep Timer Section */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-300">😴 Sleep Timer</h4>
+                  {sleepTimeRemaining > 0 ? (
+                    <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/10">
+                      <div>
+                        <p className="text-xs text-gray-400">Timer Active</p>
+                        <p className="text-base font-bold text-pink-400">
+                          {formatTimeRemaining(sleepTimeRemaining)} remaining
+                        </p>
+                      </div>
+                      <button
+                        onClick={cancelTimer}
+                        className="text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* Presets Grid */}
+                      <div className="grid grid-cols-3 gap-2">
+                        {[5, 15, 30, 45, 60].map((min) => (
+                          <button
+                            key={min}
+                            onClick={() => { setSleepTimerDuration(min); setShowTimerModal(false); }}
+                            className="bg-white/5 hover:bg-white/10 border border-white/5 text-xs text-white py-2 rounded-lg font-semibold transition-colors"
+                          >
+                            {min} min
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* Custom Minutes Stepper */}
+                      <div className="flex items-center justify-between gap-4 pt-2">
+                        <span className="text-xs text-gray-400">Custom minutes:</span>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => setCustomMinutes(Math.max(1, customMinutes - 5))}
+                            className="bg-white/5 hover:bg-white/10 text-white w-8 h-8 rounded-lg font-bold flex items-center justify-center"
+                          >
+                            -
+                          </button>
+                          <span className="text-sm font-bold text-white w-8 text-center">{customMinutes}</span>
+                          <button
+                            onClick={() => setCustomMinutes(customMinutes + 5)}
+                            className="bg-white/5 hover:bg-white/10 text-white w-8 h-8 rounded-lg font-bold flex items-center justify-center"
+                          >
+                            +
+                          </button>
+                          <button
+                            onClick={() => { setSleepTimerDuration(customMinutes); setShowTimerModal(false); }}
+                            className="accent-btn"
+                            style={{ padding: "6px 12px", borderRadius: "8px", fontSize: "12px" }}
+                          >
+                            Set
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Stop after N Songs Section */}
+                <div className="space-y-3 pt-3 border-t border-white/10">
+                  <h4 className="text-sm font-semibold text-gray-300">🛑 Song Counter Stop</h4>
+                  {songStopCount !== null ? (
+                    <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/10">
+                      <div>
+                        <p className="text-xs text-gray-400">Songs Played</p>
+                        <p className="text-base font-bold text-pink-400">
+                          {songsPlayed} / {songStopCount} songs
+                        </p>
+                      </div>
+                      <button
+                        onClick={cancelStopCount}
+                        className="text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-xs text-gray-400">Stop playback after:</span>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setCustomNCount(Math.max(1, customNCount - 1))}
+                          className="bg-white/5 hover:bg-white/10 text-white w-8 h-8 rounded-lg font-bold flex items-center justify-center"
+                        >
+                          -
+                        </button>
+                        <span className="text-sm font-bold text-white w-6 text-center">{customNCount}</span>
+                        <button
+                          onClick={() => setCustomNCount(customNCount + 1)}
+                          className="bg-white/5 hover:bg-white/10 text-white w-8 h-8 rounded-lg font-bold flex items-center justify-center"
+                        >
+                          +
+                        </button>
+                        <button
+                          onClick={() => { setStopAfterNSongs(customNCount); setShowTimerModal(false); }}
+                          className="accent-btn"
+                          style={{ padding: "6px 12px", borderRadius: "8px", fontSize: "12px" }}
+                        >
+                          Set
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

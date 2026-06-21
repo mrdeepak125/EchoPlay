@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["c.saavncdn.com", "static.saavncdn.com", "www.jiosaavn.com"],
+    domains: ["c.saavncdn.com", "static.saavncdn.com", "www.jiosaavn.com", "i.ytimg.com", "img.youtube.com"],
+  },
+  experimental: {
+    optimizePackageImports: ['react-icons', 'lucide-react', '@headlessui/react', 'swiper', 'framer-motion'],
   },
 };
 

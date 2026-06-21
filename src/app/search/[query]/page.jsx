@@ -5,7 +5,7 @@ import { getSearchedData, getSongData, getYtSearchedData } from "@/services/data
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { SwiperSlide } from "swiper/react";
-import { BsPlayFill, BsYoutube } from "react-icons/bs";
+import { BsPlayFill, BsYoutube, BsMusicNoteBeamed, BsVolumeUpFill } from "react-icons/bs";
 import { playPause, setActiveSong, setFullScreen } from "@/redux/features/playerSlice";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,20 +14,13 @@ import { setProgress } from "@/redux/features/loadingBarSlice";
 
 const Page = ({ params }) => {
   const dispatch = useDispatch();
-  const [query, setQuery] = useState(params.query);
+  const [query] = useState(params.query);
   const [searchedData, setSearchedData] = useState(null);
   const [youtubeResults, setYoutubeResults] = useState(null);
   const [loadingJiosaavn, setLoadingJiosaavn] = useState(true);
   const [loadingYoutube, setLoadingYoutube] = useState(true);
-  const { currentSongs } = useSelector((state) => state.player);
-  const [activeTab, setActiveTab] = useState("jiosaavn");
-
-  useEffect(() => {
-    const savedTab = localStorage.getItem('activeTab');
-    if (savedTab) {
-      setActiveTab(savedTab);
-    }
-  }, []);
+  const { activeSong, currentSongs, isPlaying } = useSelector((state) => state.player || {});
+  const [playingSongId, setPlayingSongId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,7 +32,7 @@ const Page = ({ params }) => {
       dispatch(setProgress(100));
     };
     fetchData();
-  }, [query]);
+  }, [query, dispatch]);
 
   useEffect(() => {
     const fetchYtData = async () => {
@@ -51,31 +44,41 @@ const Page = ({ params }) => {
       dispatch(setProgress(100));
     };
     fetchYtData();
-  }, [query]);
+  }, [query, dispatch]);
 
   const handlePlayClick = async (song) => {
     if (song?.type === "song") {
-      const Data = await getSongData(song?.id);
-      const songData = await Data?.[0];
-      dispatch(
-        setActiveSong({
-          song: songData,
-          data: currentSongs?.find((s) => s?.id === songData?.id)
-            ? currentSongs
-            : [...currentSongs, songData],
-          i: currentSongs?.find((s) => s?.id === songData?.id)
-            ? currentSongs?.findIndex((s) => s?.id === songData?.id)
-            : currentSongs?.length,
-        })
-      );
-      dispatch(setFullScreen(true));
-      dispatch(playPause(true));
+      try {
+        setPlayingSongId(song.id);
+        const Data = await getSongData(song?.id);
+        const songData = await Data?.[0];
+        if (songData) {
+          dispatch(
+            setActiveSong({
+              song: songData,
+              data: currentSongs?.find((s) => s?.id === songData?.id)
+                ? currentSongs
+                : [...currentSongs, songData],
+              i: currentSongs?.find((s) => s?.id === songData?.id)
+                ? currentSongs?.findIndex((s) => s?.id === songData?.id)
+                : currentSongs?.length,
+            })
+          );
+          dispatch(setFullScreen(false));
+          dispatch(playPause(true));
+        }
+      } catch (err) {
+        console.error("Failed to load song:", err);
+      } finally {
+        setPlayingSongId(null);
+      }
     }
   };
 
   const handlePlayVideo = async (item) => {
     try {
       const videoId = item.id.videoId;
+      setPlayingSongId(videoId);
   
       // Call the YouTube-to-MP3 conversion API
       const url = `https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`;
@@ -93,9 +96,7 @@ const Page = ({ params }) => {
       if (result && result.status === 'ok') {
         const mp3Url = result.link;
         const duration = result.duration;
-        const name = result.title;
   
-        // Simulate the structure for the active song (adjust as necessary)
         const songData = {
           name: item.snippet.title,
           artists: [
@@ -142,10 +143,10 @@ const Page = ({ params }) => {
             }
           ],
           duration: duration,
-          id: videoId
+          id: videoId,
+          isYoutube: true,
+          source: "youtube"
         };
-
-        console.log(songData);
   
         dispatch(
           setActiveSong({
@@ -165,217 +166,255 @@ const Page = ({ params }) => {
       }
     } catch (error) {
       console.error("Error converting YouTube video to MP3: ", error);
+    } finally {
+      setPlayingSongId(null);
     }
   };
 
-  const handleTabClick = (platform) => {
-    setActiveTab(platform);
-    localStorage.setItem('activeTab', platform);
-  };
-
   return (
-    <div>
-      <div className="w-11/12 m-auto mt-16">
-        {/* Tabs for JioSaavn and YouTube */}
-        <div className="flex gap-5">
-          <div
-            onClick={() => handleTabClick("jiosaavn")}
-            className={`flex items-center gap-2 mt-5 group rounded-3xl py-2 px-3 cursor-pointer border ${
-              activeTab === "jiosaavn" ? "border-[#00e6e6] text-[#00e6e6]" : "border-white"
-            }`}
-          >
-            <BsPlayFill
-              size={25}
-              className={`text-gray-200 ${
-                activeTab === "jiosaavn" ? "text-[#00e6e6]" : ""
-              }`}
-            />
-            <p className="text-lg font-semibold text-gray-200">JioSaavn</p>
+    <div className="w-11/12 lg:w-10/12 m-auto mt-10 pb-24 text-white">
+      {/* Background Ambience */}
+      <div className="absolute top-10 left-10 w-96 h-96 bg-[#a855f7]/5 rounded-full blur-[120px] pointer-events-none z-[-1]" />
+      <div className="absolute top-40 right-10 w-96 h-96 bg-[#ec4899]/5 rounded-full blur-[120px] pointer-events-none z-[-1]" />
+
+      {/* Back Button and Query Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+        <div>
+          <Link href="/search" className="text-[#a855f7] hover:text-[#ec4899] transition-colors text-sm flex items-center gap-2 mb-2 w-fit font-semibold">
+            ← Back to Search
+          </Link>
+          <h1 className="text-3xl lg:text-4xl font-extrabold text-white leading-tight">
+            Search results for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">"{decodeURIComponent(query)}"</span>
+          </h1>
+        </div>
+      </div>
+
+      {/* Dual Column Layout for Tracks */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+        
+        {/* JioSaavn Results Column */}
+        <div 
+          className="glass-card p-6 lg:p-8 flex flex-col" 
+          style={{ 
+            border: "1px solid rgba(255,255,255,0.06)", 
+            background: "rgba(255,255,255,0.02)",
+            borderRadius: "24px",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+            height: "560px"
+          }}
+        >
+          <div className="flex items-center justify-between mb-6 shrink-0">
+            <h2 className="text-xl lg:text-2xl font-extrabold text-white flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                <BsMusicNoteBeamed className="text-[#a855f7]" size={20} />
+              </div>
+              <span>JioSaavn Tracks</span>
+            </h2>
           </div>
-          <div
-            onClick={() => handleTabClick("youtube")}
-            className={`flex items-center gap-2 mt-5 group rounded-3xl py-2 px-3 cursor-pointer border ${
-              activeTab === "youtube" ? "border-[#00e6e6] text-[#00e6e6]" : "border-white"
-            }`}
-          >
-            <BsYoutube
-              size={25}
-              className={`text-gray-200 ${
-                activeTab === "youtube" ? "text-[#00e6e6]" : ""
-              }`}
-            />
-            <p className="text-lg font-semibold text-gray-200">YouTube</p>
+
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
+            {loadingJiosaavn ? (
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((idx) => (
+                  <div key={idx} className="h-16 bg-white/5 rounded-xl animate-pulse" />
+                ))}
+              </div>
+            ) : searchedData && searchedData?.songs?.results?.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {searchedData?.songs?.results?.map((song, index) => {
+                  const isActiveSong = activeSong?.id === song.id;
+                  const isCurrentPlaying = isActiveSong && isPlaying;
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => handlePlayClick(song)}
+                      className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border ${
+                        isActiveSong
+                          ? "bg-white/10 border-[#a855f7]/30 shadow-[0_4px_20px_rgba(168,85,247,0.15)]"
+                          : "bg-white/5 border-transparent hover:bg-white/10 hover:border-white/10"
+                      }`}
+                    >
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
+                        <div className="relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden group">
+                          <img
+                            src={song?.image?.[1]?.url || song?.image?.[2]?.url}
+                            alt={song?.title}
+                            className="object-cover w-full h-full group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <BsPlayFill size={22} className="text-white" />
+                          </div>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm lg:text-base font-semibold truncate ${isActiveSong ? "text-[#a855f7]" : "text-white"}`} style={{ color: isActiveSong ? "var(--accent-primary)" : "#fff" }}>
+                            {song?.title?.replace("&#039;", "'")?.replace("&amp;", "&")}
+                          </p>
+                          <p className="text-xs text-gray-400 truncate mt-0.5">
+                            {song?.primaryArtists || 'Various Artists'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center shrink-0 ml-4">
+                        {playingSongId === song.id ? (
+                          <div className="custom-loader w-5 h-5" />
+                        ) : isCurrentPlaying ? (
+                          <BsVolumeUpFill size={20} className="text-[#a855f7]" style={{ color: "var(--accent-primary)" }} />
+                        ) : song?.duration ? (
+                          <span className="text-xs text-gray-400 font-medium">
+                            {Math.floor(song.duration / 60)}:{(song.duration % 60).toString().padStart(2, '0')}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-400 py-6 text-center">No songs found for this search query.</p>
+            )}
           </div>
         </div>
 
-        {activeTab === "jiosaavn" && (
-          <div className="mt-10 text-gray-200">
-            <h1 className="text-3xl font-bold">
-              Search results for "{query.replaceAll("%20", " ")}"
-            </h1>
-            <div className="mt-10 text-gray-200">
-              <h2 className="text-lg lg:text-4xl font-semibold">Songs</h2>
-              {loadingJiosaavn ? (
-                <SongListSkeleton />
-              ) : (
-                searchedData && searchedData?.songs?.results?.length > 0 ? (
-                  <div className="mt-5">
-                    {searchedData?.songs?.results?.map((song, index) => (
-                      <div
-                        key={index}
-                        onClick={() => handlePlayClick(song)}
-                        className="flex items-center mt-5 cursor-pointer group border-b-[1px] border-gray-400 justify-between"
-                      >
-                        <div className="flex items-center gap-5">
-                          <div className="relative">
-                            <img
-                              src={song?.image?.[2]?.url}
-                              alt={song?.title}
-                              width={50}
-                              height={50}
-                              className="mb-3"
-                            />
-                            <BsPlayFill
-                              size={25}
-                              className="group-hover:block hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-200"
-                            />
-                          </div>
-                          <div className="w-32 lg:w-80">
-                            <p className="text-sm lg:text-lg font-semibold truncate">
-                              {song?.title
-                                ?.replace("&#039;", "'")
-                                ?.replace("&amp;", "&")}
-                            </p>
+        {/* YouTube Results Column */}
+        <div 
+          className="glass-card p-6 lg:p-8 flex flex-col" 
+          style={{ 
+            border: "1px solid rgba(255,255,255,0.06)", 
+            background: "rgba(255,255,255,0.02)",
+            borderRadius: "24px",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+            height: "560px"
+          }}
+        >
+          <div className="flex items-center justify-between mb-6 shrink-0">
+            <h2 className="text-xl lg:text-2xl font-extrabold text-white flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                <BsYoutube className="text-[#ef4444]" size={20} />
+              </div>
+              <span>YouTube Video Results</span>
+            </h2>
+          </div>
+
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3">
+            {loadingYoutube ? (
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((idx) => (
+                  <div key={idx} className="h-16 bg-white/5 rounded-xl animate-pulse" />
+                ))}
+              </div>
+            ) : youtubeResults?.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {youtubeResults.map((item, index) => {
+                  const isCurrentActive = activeSong?.id === item.id.videoId;
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => handlePlayVideo(item)}
+                      className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border ${
+                        isCurrentActive
+                          ? "bg-white/10 border-[#a855f7]/30 shadow-[0_4px_20px_rgba(168,85,247,0.15)]"
+                          : "bg-white/5 border-transparent hover:bg-white/10 hover:border-white/10"
+                      }`}
+                    >
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
+                        <div className="relative flex-shrink-0 w-16 h-11 rounded-lg overflow-hidden group">
+                          <img
+                            src={item.snippet.thumbnails.medium.url || item.snippet.thumbnails.default.url}
+                            alt={item.snippet.title}
+                            className="object-cover w-full h-full group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <BsPlayFill size={22} className="text-white" />
                           </div>
                         </div>
-                        <div className="hidden lg:block max-w-56">
-                          {song?.primaryArtists && (
-                            <p className="text-gray-400 truncate">
-                              By: {song?.primaryArtists}
-                            </p>
-                          )}
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm font-semibold truncate ${isCurrentActive ? "text-[#a855f7]" : "text-white"}`} style={{ color: isCurrentActive ? "var(--accent-primary)" : "#fff" }}>
+                            {item.snippet.title?.replace("&#039;", "'")?.replace("&amp;", "&")}
+                          </p>
+                          <p className="text-xs text-gray-400 truncate mt-0.5">
+                            {item.snippet.channelTitle}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <SongListSkeleton />
-                )
-              )}
-            </div>
 
-            {/* Other JioSaavn sections */}
-            <div className="mt-10 text-gray-200">
-              <SwiperLayout title={"Albums"}>
-                {searchedData &&
-                  searchedData?.albums?.results?.length > 0 &&
-                  searchedData?.albums?.results?.map((song) => (
-                    <SwiperSlide key={song?.id}>
-                      <SongCard song={song} />
-                    </SwiperSlide>
-                  ))}
-              </SwiperLayout>
-            </div>
-            <div className="mt-10 text-gray-200">
-              <SwiperLayout title={"Artists"}>
-                {searchedData &&
-                  searchedData?.artists?.results?.length > 0 &&
-                  searchedData?.artists?.results?.map((artist) => (
-                    <SwiperSlide key={artist?.id}>
-                      <Link href={`/artist/${artist?.id}`}>
-                        <div className="flex flex-col justify-center items-center">
-                          <Image
-                            src={artist?.image?.[2]?.url}
-                            alt={artist?.title}
-                            width={200}
-                            height={200}
-                            className="rounded-full"
-                          />
-                          <p className="lg:text-base lg:w-44 w-24 text-center text-xs font-semibold mt-3 truncate">
-                            {artist?.title?.replace("&amp;", "&")}
-                          </p>
-                          <div>
-                            {artist?.description && (
-                              <p className="text-gray-400 truncate text-[8px] lg:text-xs">
-                                {artist?.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                    </SwiperSlide>
-                  ))}
-              </SwiperLayout>
-            </div>
-            <div className="mt-10 text-gray-200">
-              <SwiperLayout title={"Playlists"}>
-                {searchedData &&
-                  searchedData?.playlists?.results?.length > 0 &&
-                  searchedData?.playlists?.results?.map((song) => (
-                    <SwiperSlide key={song?.id}>
-                      <SongCard song={song} />
-                    </SwiperSlide>
-                  ))}
-              </SwiperLayout>
-            </div>
+                      <div className="flex items-center shrink-0 ml-4">
+                        {playingSongId === item.id.videoId ? (
+                          <div className="custom-loader w-5 h-5" />
+                        ) : (
+                          <BsYoutube size={22} className="text-red-500 opacity-80 group-hover:opacity-100 transition-opacity" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-400 py-6 text-center">No YouTube results found.</p>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Full-width Swipers below */}
+      <div className="space-y-8 mt-12 w-full">
+        {/* Albums Swiper */}
+        {searchedData?.albums?.results?.length > 0 && (
+          <div className="glass-card p-6" style={{ background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "24px" }}>
+            <SwiperLayout title={"Albums"}>
+              {searchedData.albums.results.map((album) => (
+                <SwiperSlide key={album?.id}>
+                  <SongCard song={album} />
+                </SwiperSlide>
+              ))}
+            </SwiperLayout>
           </div>
         )}
 
-        {activeTab === "youtube" && (
-          <div className="mt-10 text-gray-200">
-            <h1 className="text-3xl font-bold">
-              YouTube search results for "{query.replaceAll("%20", " ")}"
-            </h1>
-            <div className="mt-10 text-gray-200">
-              <h2 className="text-lg lg:text-4xl font-semibold">Songs</h2>
-              {loadingYoutube ? (
-                <SongListSkeleton />
-              ) : (
-                youtubeResults?.length > 0 ? (
-                  <div className="mt-5">
-                    {youtubeResults.map((item, index) => (
-                      <div
-                        key={index}
-                        onClick={() => handlePlayVideo(item)}
-                        className="flex items-center mt-5 cursor-pointer group border-b-[1px] border-gray-400 justify-between"
-                      >
-                        <div className="flex items-center gap-5">
-                          <div className="relative">
-                            <img
-                              src={item.snippet.thumbnails.default.url}
-                              alt={item.snippet.title}
-                              width={50}
-                              height={50}
-                              className="mb-3"
-                            />
-                            <BsPlayFill
-                              size={25}
-                              className="group-hover:block hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-200"
-                            />
-                          </div>
-                          <div className="w-32 lg:w-80">
-                            <p className="text-sm lg:text-lg font-semibold truncate">
-                              {item.snippet.title
-                                ?.replace("&#039;", "'")
-                                ?.replace("&amp;", "&")}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="hidden lg:block max-w-56">
-                          {item.snippet.channelTitle && (
-                            <p className="text-gray-400 truncate">
-                              By: {item.snippet.channelTitle}
-                            </p>
-                          )}
-                        </div>
+        {/* Artists Swiper */}
+        {searchedData?.artists?.results?.length > 0 && (
+          <div className="glass-card p-6" style={{ background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "24px" }}>
+            <SwiperLayout title={"Artists"}>
+              {searchedData.artists.results.map((artist) => (
+                <SwiperSlide key={artist?.id}>
+                  <Link href={`/artist/${artist?.id}`}>
+                    <div className="flex flex-col justify-center items-center group">
+                      <div className="w-32 h-32 relative overflow-hidden rounded-full border-2 border-transparent group-hover:border-[#a855f7] transition-all" style={{ borderColor: "transparent" }}>
+                        <Image
+                          src={artist?.image?.[2]?.url || artist?.image?.[1]?.url}
+                          alt={artist?.title}
+                          fill
+                          sizes="128px"
+                          className="rounded-full object-cover group-hover:scale-105 transition-transform"
+                        />
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <SongListSkeleton />
-                )
-              )}
-            </div>
+                      <p className="text-sm font-bold text-white mt-3 truncate w-32 text-center group-hover:text-[#a855f7] transition-colors" style={{ color: "var(--text-main)" }}>
+                        {artist?.title?.replace("&amp;", "&")}
+                      </p>
+                      {artist?.description && (
+                        <p className="text-gray-500 truncate text-[10px] w-32 text-center mt-0.5">
+                          {artist?.description}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                </SwiperSlide>
+              ))}
+            </SwiperLayout>
+          </div>
+        )}
+
+        {/* Playlists Swiper */}
+        {searchedData?.playlists?.results?.length > 0 && (
+          <div className="glass-card p-6" style={{ background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "24px" }}>
+            <SwiperLayout title={"Playlists"}>
+              {searchedData.playlists.results.map((playlist) => (
+                <SwiperSlide key={playlist?.id}>
+                  <SongCard song={playlist} />
+                </SwiperSlide>
+              ))}
+            </SwiperLayout>
           </div>
         )}
       </div>

@@ -44,16 +44,18 @@ const VolumeBar = ({
     <>
       <div className="hidden lg:flex flex-1 items-center justify-end">
         <div className=" relative">
-          <BiAddToQueue
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowMenu(!showMenu);
-            }}
-            title="Add to Playlist"
-            size={25}
-            color={"white"}
-            className={`${!true ? "hidden sm:block" : " m-3"} cursor-pointer`}
-          />
+          {!(activeSong?.isYoutube || activeSong?.source === "youtube") && (
+            <BiAddToQueue
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+              title="Add to Playlist"
+              size={25}
+              color={"white"}
+              className={`${!true ? "hidden sm:block" : " m-3"} cursor-pointer`}
+            />
+          )}
           {showMenu && (
             <div
               onClick={() => {
@@ -125,7 +127,7 @@ const VolumeBar = ({
           min={min}
           max={max}
           onChange={onChange}
-          className="2xl:w-24 lg:w-24 md:w-28 h-1 ml-2 accent-[#ff6cab] cursor-pointer"
+          className="2xl:w-24 lg:w-24 md:w-28 h-1 ml-2 accent-[#a855f7] cursor-pointer"
         />
       </div>
       {/* overlay */}

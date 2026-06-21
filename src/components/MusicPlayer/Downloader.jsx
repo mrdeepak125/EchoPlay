@@ -3,13 +3,22 @@
 import React, { useState, useEffect } from 'react'
 import { MdOutlineFileDownload, MdOutlineFileDownloadDone } from 'react-icons/md'
 import { set, get } from 'idb-keyval'
+import { useSelector } from 'react-redux'
+import { getQualityUrl } from '@/redux/features/audioQualitySlice'
 
 export default function Downloader({ activeSong, icon }) {
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [isDownloaded, setIsDownloaded] = useState(false)
 
-  const songUrl = activeSong?.downloadUrl?.[4]?.url
+  const { quality } = useSelector((state) => state.audioQuality || { quality: "high" });
+
+  // Resolve song URL based on whether it is a YouTube stream or JioSaavn song
+  const isYoutube = activeSong?.isYoutube || activeSong?.source === 'youtube';
+  const songUrl = isYoutube 
+    ? activeSong?.url 
+    : getQualityUrl(activeSong?.downloadUrl, quality);
+
   const filename = `${activeSong?.name?.replace(/&#039;/g, "'")?.replace(/&amp;/g, "&")}.mp3`
 
   useEffect(() => {
@@ -54,20 +63,46 @@ export default function Downloader({ activeSong, icon }) {
         chunks.push(value)
         receivedLength += value.length
 
-        setDownloadProgress(Math.round((receivedLength / contentLength) * 100))
+        if (contentLength) {
+          setDownloadProgress(Math.round((receivedLength / contentLength) * 100))
+        } else {
+          // If contentLength is missing/zero, show a progressive mockup based on estimated size
+          setDownloadProgress(Math.min(99, Math.round(receivedLength / (1024 * 1024 * 5) * 100)))
+        }
       }
 
       const blob = new Blob(chunks, { type: 'audio/mpeg' })
       
-      // Store the actual audio data in IndexedDB
+      // Fetch and cache the artwork offline as a base64 Data URL
+      let cachedImage = null;
+      try {
+        const imageUrl = activeSong?.image?.[2]?.url || activeSong?.image?.[1]?.url || activeSong?.image?.[0]?.url || activeSong?.image?.[2]?.link;
+        if (imageUrl) {
+          const imgResponse = await fetch(imageUrl);
+          if (imgResponse.ok) {
+            const imgBlob = await imgResponse.blob();
+            cachedImage = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = () => resolve(null);
+              reader.readAsDataURL(imgBlob);
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to cache artwork for offline playback:", err);
+      }
+
+      // Store the actual audio data and cached image in IndexedDB
       const songData = {
         ...activeSong,
         audioData: await blob.arrayBuffer(),
+        localImage: cachedImage,
         isDownloaded: true,
       }
 
       await set(activeSong.id, songData)
-      console.log(`Song ${filename} saved successfully in IndexedDB`)
+      console.log(`Song ${filename} and its artwork saved successfully in IndexedDB`)
 
       setIsDownloaded(true)
 
@@ -89,7 +124,7 @@ export default function Downloader({ activeSong, icon }) {
   }
 
   if (!activeSong || !activeSong.id) {
-    return null // or return a placeholder component
+    return null
   }
 
   return (

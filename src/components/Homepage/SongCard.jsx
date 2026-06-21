@@ -155,11 +155,11 @@ const SongCard = ({ song, isPlaying, activeSong }) => {
   return (
     <div
       key={song?.id}
-      className="flex flex-col lg:w-[205px] lg:[220px] p-2 bg-white/5 bg-opacity-80 backdrop-blur-sm rounded-lg cursor-pointer"
+      className="w-full max-w-[200px] p-3 bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/[0.12] rounded-2xl transition-all duration-300 hover:shadow-[0_12px_30px_rgba(0,0,0,0.4)] transform hover:-translate-y-1 cursor-pointer flex flex-col group"
     >
       <Link
         onClick={(e) => {
-          if (song?.type == "song") {
+          if (song?.type === "song") {
             e.preventDefault();
           }
         }}
@@ -170,13 +170,12 @@ const SongCard = ({ song, isPlaying, activeSong }) => {
             ? `/playlist/${song?.id}`
             : ""
         }
+        className="w-full flex flex-col text-decoration-none"
       >
-        <div className="relative w-full lg:h-[178px] group">
+        <div className="relative aspect-square w-full rounded-xl overflow-hidden shadow-[0_8px_20px_rgba(0,0,0,0.3)]">
           <div
-            className={`absolute inset-0 p-2 justify-center items-center bg-black bg-opacity-0 group-hover:flex ${
-              activeSong?.id === song?.id
-                ? "hover:flex hover:bg-black hover:bg-opacity-70"
-                : "hidden"
+            className={`absolute inset-0 z-10 flex items-center justify-center bg-black/45 transition-all duration-300 opacity-0 group-hover:opacity-100 ${
+              activeSong?.id === song?.id ? "opacity-100 bg-black/60" : ""
             }`}
           >
             <PlayPause
@@ -201,24 +200,25 @@ const SongCard = ({ song, isPlaying, activeSong }) => {
             className={`${
               song.type === "playlist" && song?.subtitle === "JioSaavn"
                 ? "rounded-full"
-                : "rounded-lg"
-            } w-full h-full `}
+                : "rounded-xl"
+            } w-full h-full object-cover group-hover:scale-105 transition-transform duration-500`}
           />
         </div>
 
-        <div className=" mt-2 lg:mt-4 flex flex-col">
+        <div className="mt-3 flex flex-col min-w-0">
           <p
-            className={`font-semibold text-xs lg:text-sm text-white truncate w-full ${
+            className={`font-bold text-sm text-white truncate w-full group-hover:text-[#a855f7] transition-colors ${
               song?.subtitle === "JioSaavn" ? "text-center" : ""
             }`}
+            style={{ color: activeSong?.id === song?.id ? "var(--accent-primary)" : "#fff" }}
           >
             {song?.name?.replaceAll("&#039;", "'")?.replaceAll("&amp;", "&") ||
               song?.title}
           </p>
-          <p className="text-[9px] lg:text-xs truncate text-gray-300 mt-1">
+          <p className="text-xs truncate text-gray-400 mt-1">
             {song?.artists?.primary?.map((artist) => artist?.name).join(", ") ||
               song?.artists?.map((artist) => artist?.name).join(", ") ||
-              (song?.subtitle != "JioSaavn" && song?.subtitle)}
+              (song?.subtitle !== "JioSaavn" && song?.subtitle) || "Various Artists"}
           </p>
         </div>
       </Link>

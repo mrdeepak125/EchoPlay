@@ -3,15 +3,18 @@ import { setProgress } from "@/redux/features/loadingBarSlice";
 import { playPause, setActiveSong } from "@/redux/features/playerSlice";
 import { getAlbumData } from "@/services/dataAPI";
 import Link from "next/link";
-import React, { useEffect } from "react";
-import { useState } from "react";
-import { BsPlayFill } from "react-icons/bs";
+import React, { useEffect, useState } from "react";
+import { BsPlayFill, BsFillPlayFill } from "react-icons/bs";
+import { MdOutlineFileDownload, MdOutlineFileDownloadDone, MdLibraryMusic } from "react-icons/md";
 import { useDispatch } from "react-redux";
-import { BsFillPlayFill } from "react-icons/bs";
+import { set } from "idb-keyval";
+import { toast } from "react-hot-toast";
 
-const page = ({ params }) => {
+const Page = ({ params }) => {
   const [albumData, setAlbumData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState("");
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -19,23 +22,16 @@ const page = ({ params }) => {
       dispatch(setProgress(50));
       const response = await getAlbumData(params.albumId);
       dispatch(setProgress(100));
-      // console.log(response);
       setAlbumData(response);
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [params.albumId, dispatch]);
 
-  // Utility function to format the duration in seconds to "m:ss" format (without leading zero for minutes)
   function formatDuration(durationInSeconds) {
     const minutes = Math.floor(durationInSeconds / 60);
     const seconds = Math.round(durationInSeconds % 60);
-
-    if (minutes > 0) {
-      return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-    } else {
-      return `${seconds}`;
-    }
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   }
 
   const handlePlayClick = (song, index) => {
@@ -43,116 +39,251 @@ const page = ({ params }) => {
     dispatch(playPause(true));
   };
 
+  const handleDownloadAll = async () => {
+    if (!albumData?.songs || albumData.songs.length === 0) return;
+    
+    setDownloading(true);
+    setDownloadProgress("Preparing...");
+    toast.success(`Starting download of ${albumData.songs.length} songs`);
+
+    try {
+      for (let i = 0; i < albumData.songs.length; i++) {
+        const song = albumData.songs[i];
+        const currentTrackNum = i + 1;
+        setDownloadProgress(`Song ${currentTrackNum}/${albumData.songs.length} (0%)`);
+
+        // Use the highest quality download URL
+        const songUrl = song.downloadUrl?.[4]?.url || song.downloadUrl?.[3]?.url || song.downloadUrl?.[2]?.url;
+        if (!songUrl) {
+          console.warn(`No download URL for song: ${song.name}`);
+          continue;
+        }
+
+        const filename = `${song.name?.replace(/&#039;/g, "'")?.replace(/&amp;/g, "&")}.mp3`;
+
+        const response = await fetch(songUrl);
+        if (!response.ok) throw new Error(`Failed to fetch song: ${song.name}`);
+
+        const contentLength = Number(response.headers.get("Content-Length"));
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error(`Unable to read song streams`);
+
+        let receivedLength = 0;
+        const chunks = [];
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          chunks.push(value);
+          receivedLength += value.length;
+
+          if (contentLength) {
+            const percent = Math.round((receivedLength / contentLength) * 100);
+            setDownloadProgress(`Song ${currentTrackNum}/${albumData.songs.length} (${percent}%)`);
+          }
+        }
+
+        const blob = new Blob(chunks, { type: "audio/mpeg" });
+        const arrayBuf = await blob.arrayBuffer();
+
+        // Save to IndexedDB for offline play
+        const songData = {
+          ...song,
+          audioData: arrayBuf,
+          isDownloaded: true,
+        };
+        await set(song.id, songData);
+
+        // Prompt local file download
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }
+      toast.success("All songs downloaded successfully!");
+    } catch (err) {
+      console.error("Batch download error:", err);
+      toast.error("An error occurred during downloading");
+    } finally {
+      setDownloading(false);
+      setDownloadProgress("");
+    }
+  };
+
   return (
-    <div className="w-11/12 m-auto mt-16">
-      <div className=" flex flex-col lg:flex-row items-center">
-        {loading ? (
-          <div
-            role="status"
-            className="space-y-8 animate-pulse md:space-y-0 md:space-x-8 md:flex md:items-center"
-          >
-            <div className="flex rounded-lg items-center justify-center w-[300px] h-[300px] bg-gray-300 dark:bg-gray-700">
-              <svg
-                className="w-10 h-10 text-gray-200 dark:text-gray-600"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="currentColor"
-                viewBox="0 0 20 18"
-              >
-                <path d="M18 0H2a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2Zm-5.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4.376 10.481A1 1 0 0 1 16 15H4a1 1 0 0 1-.895-1.447l3.5-7A1 1 0 0 1 7.468 6a.965.965 0 0 1 .9.5l2.775 4.757 1.546-1.887a1 1 0 0 1 1.618.1l2.541 4a1 1 0 0 1 .028 1.011Z" />
-              </svg>
-            </div>
-          </div>
-        ) : (
-          <img
-            className=" rounded-lg"
-            src={albumData?.image?.[2]?.url}
-            alt={albumData?.title}
-            width={300}
-            height={300}
+    <div className="w-11/12 lg:w-9/12 m-auto mt-10 pb-24">
+      {/* Premium Album Header Card */}
+      <div 
+        className="glass-card p-6 lg:p-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)",
+          border: "1px solid rgba(255,255,255,0.08)",
+        }}
+      >
+        {/* Subtle blur cover background */}
+        {!loading && albumData?.image?.[2]?.url && (
+          <div 
+            className="absolute inset-0 pointer-events-none opacity-10 blur-3xl scale-125"
+            style={{
+              backgroundImage: `url(${albumData.image[2].url})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              zIndex: -1,
+            }}
           />
         )}
 
-        <div className=" lg:ml-10 text-gray-100 mt-12 flex flex-col gap-2">
-          <h1 className="text-xl lg:text-4xl font-bold">{albumData?.name}</h1>
-          <h2 className="text-xl font-semibold">{albumData?.subtitle}</h2>
-          <h3 className="text-xl font-semibold cursor-pointer">
-            {albumData?.primaryArtists?.split(",")?.map((artist, index) => (
-              <React.Fragment key={index}>
-                <Link
-                  className=" hover:underline"
-                  href={`/artist/${albumData?.primaryArtistsId
-                    ?.split(",")
-                    [index]?.trim()}`}
-                >
-                  {artist?.trim()?.replaceAll("&amp;", "&")}
-                </Link>
-                {index < albumData.primaryArtists.split(",").length - 1 && ", "}
-              </React.Fragment>
-            ))}
-          </h3>
-          <ul className="flex items-center gap-3 text-gray-300">
-            <li className="text-lg font-semibold">• {albumData?.year}</li>
-            <li className="text-lg font-semibold">
-              • {albumData?.songCount} songs
-            </li>
-          </ul>
-          <div
-            onClick={() => {
-              handlePlayClick(albumData?.songs?.[0], 0);
-            }}
-            className="flex items-center gap-2 mt-5 group rounded-3xl py-2 px-3 hover:border-[#00e6e6] w-fit cursor-pointer border border-white"
-          >
-            <BsFillPlayFill
-              size={25}
-              className="text-gray-200 group-hover:text-[#00e6e6]"
+        {/* Album Artwork */}
+        {loading ? (
+          <div className="w-[260px] h-[260px] rounded-2xl bg-white/5 animate-pulse flex-shrink-0" />
+        ) : (
+          <div className="relative group w-[260px] h-[260px] flex-shrink-0 shadow-[0_20px_50px_rgba(0,0,0,0.4)]">
+            <img
+              className="rounded-2xl object-cover w-full h-full border border-white/10"
+              src={albumData?.image?.[2]?.url}
+              alt={albumData?.name}
             />
-            <p className="text-lg font-semibold">Play</p>
           </div>
+        )}
+
+        {/* Album Metadata & Action Buttons */}
+        <div className="flex-1 text-center md:text-left text-gray-100 flex flex-col gap-3">
+          {loading ? (
+            <div className="space-y-4">
+              <div className="h-8 bg-white/5 rounded-lg w-2/3 animate-pulse" />
+              <div className="h-5 bg-white/5 rounded-lg w-1/2 animate-pulse" />
+              <div className="h-5 bg-white/5 rounded-lg w-1/3 animate-pulse" />
+            </div>
+          ) : (
+            <>
+              <p className="text-xs font-bold uppercase tracking-wider text-[#a855f7]">Album</p>
+              <h1 className="text-3xl lg:text-5xl font-extrabold leading-tight">
+                {albumData?.name?.replace("&amp;", "&")}
+              </h1>
+              <h2 className="text-base text-gray-400 font-medium">
+                {albumData?.subtitle}
+              </h2>
+              
+              <h3 className="text-sm font-semibold text-gray-300">
+                By:{" "}
+                {albumData?.primaryArtists?.split(",")?.map((artist, index) => (
+                  <React.Fragment key={index}>
+                    <Link
+                      className="hover:underline text-[#a855f7]"
+                      style={{ color: "var(--accent-primary)" }}
+                      href={`/artist/${albumData?.primaryArtistsId?.split(",")?.[index]?.trim()}`}
+                    >
+                      {artist?.trim()?.replaceAll("&amp;", "&")}
+                    </Link>
+                    {index < albumData.primaryArtists.split(",").length - 1 && ", "}
+                  </React.Fragment>
+                ))}
+              </h3>
+
+              <div className="flex items-center gap-3 text-xs text-gray-400 justify-center md:justify-start mt-1">
+                <span>📅 {albumData?.year}</span>
+                <span>•</span>
+                <span>🎵 {albumData?.songCount} songs</span>
+              </div>
+
+              {/* Action row */}
+              <div className="flex items-center gap-3 mt-6 justify-center md:justify-start flex-wrap">
+                <button
+                  onClick={() => handlePlayClick(albumData?.songs?.[0], 0)}
+                  className="accent-btn flex items-center gap-2"
+                  style={{ borderRadius: "20px", padding: "10px 24px" }}
+                >
+                  <BsFillPlayFill size={22} />
+                  <span>Play Album</span>
+                </button>
+
+                <button
+                  onClick={handleDownloadAll}
+                  disabled={downloading}
+                  className="glass-btn flex items-center gap-2 hover:border-[#a855f7]/30"
+                  style={{ borderRadius: "20px", padding: "10px 24px" }}
+                >
+                  {downloading ? (
+                    <>
+                      <div className="custom-loader w-4 h-4" />
+                      <span className="text-xs">{downloadProgress}</span>
+                    </>
+                  ) : (
+                    <>
+                      <MdOutlineFileDownload size={20} />
+                      <span>Download All</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
-      <div className="mt-10 text-gray-200">
-        <h1 className="text-3xl font-bold">Songs</h1>
-        <div className="mt-5">
-          {albumData?.songs?.map((song, index) => (
-            <div
-              key={song?.id}
-              onClick={() => {
-                handlePlayClick(song, index);
-              }}
-              className="flex items-center  mt-5 cursor-pointer group border-b-[1px] border-gray-400 justify-between"
-            >
-              <div className="flex items-center gap-5">
-                <div className=" relative">
-                  <div className=" w-10 h-10" />
-                  <p className=" group-hover:hidden font-extrabold absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-200">
-                    {index + 1}.
-                  </p>
-                  <BsPlayFill
-                    size={25}
-                    className=" group-hover:block hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-200"
-                  />
+
+      {/* Songs Table List */}
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+          <MdLibraryMusic className="text-[#a855f7]" style={{ color: "var(--accent-primary)" }} />
+          <span>Album Tracks</span>
+        </h2>
+
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((idx) => (
+              <div key={idx} className="h-14 bg-white/5 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="glass-card-flat p-2" style={{ background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            {albumData?.songs?.map((song, index) => (
+              <div
+                key={song?.id}
+                onClick={() => handlePlayClick(song, index)}
+                className="flex items-center justify-between p-3.5 rounded-xl cursor-pointer hover:bg-white/5 border border-transparent hover:border-white/5 transition-all group"
+              >
+                {/* Index & Title */}
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <div className="relative w-8 h-8 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-gray-400 group-hover:hidden">
+                      {index + 1}
+                    </span>
+                    <BsPlayFill
+                      size={20}
+                      className="hidden group-hover:block text-white"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm lg:text-base font-semibold text-white truncate">
+                      {song?.name?.replace("&#039;", "'")?.replace("&amp;", "&")}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">
+                      {song?.primaryArtists || "Various Artists"}
+                    </p>
+                  </div>
                 </div>
-                <div className=" w-32 lg:w-80">
-                  <p className=" text-sm lg:text-lg font-semibold truncate">
-                    {song?.name.replace("&#039;", "'").replace("&amp;", "&")}
-                  </p>
+
+                {/* Play Counts */}
+                <div className="hidden sm:block text-xs text-gray-400 w-32 truncate">
+                  {song?.playCount && `${Number(song.playCount).toLocaleString()} plays`}
+                </div>
+
+                {/* Duration */}
+                <div className="text-xs font-semibold text-gray-400 pl-4">
+                  {formatDuration(song?.duration)}
                 </div>
               </div>
-              <div className=" hidden lg:block w-28">
-                {song?.playCount && (
-                  <p className="text-gray-400">{song?.playCount} plays</p>
-                )}
-              </div>
-              <div>
-                <p>{formatDuration(song?.duration)}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default page;
+export default Page;
