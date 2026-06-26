@@ -30,6 +30,14 @@ export default function AdminPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Check if already logged in as admin
   useEffect(() => {
@@ -191,18 +199,18 @@ export default function AdminPage() {
   return (
     <div style={styles.dashboard}>
       {/* Top Bar */}
-      <header style={styles.topBar}>
+      <header style={{ ...styles.topBar, flexWrap: isMobile ? "wrap" : "nowrap", gap: isMobile ? "10px" : "0" }}>
         <div style={styles.topBarLeft}>
           <span style={styles.adminBadge}>🛡️ Admin</span>
-          <h1 style={styles.dashTitle}>EchoPlay Admin Panel</h1>
+          <h1 style={{ ...styles.dashTitle, fontSize: isMobile ? "16px" : "20px" }}>EchoPlay Admin Panel</h1>
         </div>
-        <div style={styles.topBarRight}>
-          <span style={styles.adminEmailText}>{adminEmail}</span>
+        <div style={{ ...styles.topBarRight, width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "space-between" : "flex-end" }}>
+          <span style={{ ...styles.adminEmailText, fontSize: isMobile ? "12px" : "14px", overflow: "hidden", textOverflow: "ellipsis", maxWidth: isMobile ? "160px" : "none" }}>{adminEmail}</span>
           <button onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
         </div>
       </header>
 
-      <div style={styles.content}>
+      <div style={{ ...styles.content, padding: isMobile ? "16px" : "28px" }}>
         {/* Stats */}
         <div style={styles.statsRow}>
           <div style={styles.statCard}>
@@ -229,12 +237,12 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div style={styles.grid}>
+        <div style={{ ...styles.grid, gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr" }}>
           {/* Create Notification Form */}
           <div style={styles.formCard}>
             <h2 style={styles.cardTitle}>📢 Send Notification</h2>
             <form onSubmit={handleSubmit} style={styles.notifForm}>
-              <div style={styles.formRow}>
+              <div style={{ ...styles.formRow, gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr" }}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Emoji</label>
                   <div style={styles.emojiGrid}>
@@ -293,8 +301,8 @@ export default function AdminPage() {
                 <textarea
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  style={{ ...styles.input, minHeight: "100px", resize: "vertical" }}
-                  placeholder="Notification message..."
+                  style={{ ...styles.input, minHeight: "120px", resize: "vertical", whiteSpace: "pre-wrap", lineHeight: "1.6" }}
+                  placeholder="Notification message... (press Enter for new line, Space for space)"
                   required
                 />
               </div>
@@ -325,7 +333,7 @@ export default function AdminPage() {
                     </span>
                     {form.pinned && <span style={styles.pinnedTag}>📌 Pinned</span>}
                   </div>
-                  <p style={styles.previewMsg}>{form.message || "Preview message..."}</p>
+                  <p style={{ ...styles.previewMsg, whiteSpace: "pre-wrap" }}>{form.message || "Preview message..."}</p>
                 </div>
               )}
 
@@ -383,7 +391,7 @@ export default function AdminPage() {
                                 {notif.type}
                               </span>
                             </div>
-                            <p style={styles.notifMsg}>{notif.message}</p>
+                            <p style={{ ...styles.notifMsg, whiteSpace: "pre-wrap" }}>{notif.message}</p>
                           </div>
                         </div>
                         <button
@@ -503,6 +511,7 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "24px",
+    alignItems: "start",
   },
   formCard: {
     background: "rgba(255,255,255,0.04)",
