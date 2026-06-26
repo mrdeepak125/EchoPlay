@@ -1,36 +1,17 @@
 import mongoose from "mongoose"
-import dns from "dns"
-
-// Set public DNS servers to resolve MongoDB SRV cluster address successfully (fixes ECONNREFUSED/srv query errors)
-try {
-    dns.setServers(['8.8.8.8', '8.8.4.4']);
-} catch (e) {
-    console.warn("Could not override DNS servers:", e);
-}
 
 const MONGODB_URL = process.env.MONGODB_URL;
 const DB_NAME = process.env.DB_NAME;
 
 if (!MONGODB_URL) {
-    throw new Error(
-        "Please define the MONGODB_URI environment variable inside .env.local"
-    )
+    throw new Error("Please define the MONGODB_URL environment variable in .env");
 }
 
-
-const customLookup = (hostname, options, callback) => {
-    if (typeof options === 'function') {
-        callback = options;
-        options = {};
-    }
-    dns.resolve4(hostname, (err, addresses) => {
-        if (err || !addresses || addresses.length === 0) {
-            return dns.lookup(hostname, options, callback);
-        }
-        callback(null, addresses[0], 4);
-    });
-};
-
+/**
+ * Global connection cache — reused across hot Vercel function invocations.
+ * The custom DNS lookup has been intentionally REMOVED because it breaks
+ * mongodb+srv:// SRV record resolution, causing ReplicaSetNoPrimary errors.
+ */
 let cached = global.mongoose;
 
 if (!cached) {
@@ -38,37 +19,47 @@ if (!cached) {
 }
 
 const dbConnect = async () => {
-    if (cached.conn) {
+    // Return existing healthy connection
+    if (cached.conn && mongoose.connection.readyState === 1) {
         return cached.conn;
     }
 
-    // Disable buffering of commands when database is not connected
-    mongoose.set('bufferCommands', false);
-    
+    // Reset stale connection
+    if (mongoose.connection.readyState === 0 || mongoose.connection.readyState === 3) {
+        cached.conn = null;
+        cached.promise = null;
+    }
+
+    mongoose.set("bufferCommands", false);
+
     if (!cached.promise) {
         const opts = {
             dbName: DB_NAME,
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 8000, // 8 seconds timeout
-            lookup: customLookup,
+            serverSelectionTimeoutMS: 10000, // 10s — enough for Vercel cold start
+            connectTimeoutMS: 10000,
+            socketTimeoutMS: 30000,
+            // NO custom lookup — let mongoose handle SRV DNS natively
+            // mongodb+srv:// requires SRV records which customLookup broke
+            maxPoolSize: 10,
+            minPoolSize: 1,
         };
 
-        cached.promise = mongoose.connect(MONGODB_URL, opts).then((mongooseInstance) => {
-            console.log("Connected to MongoDB (cached connection)");
-            return mongooseInstance;
-        });
+        cached.promise = mongoose
+            .connect(MONGODB_URL, opts)
+            .then((mongooseInstance) => {
+                console.log("MongoDB connected successfully");
+                return mongooseInstance;
+            })
+            .catch((err) => {
+                cached.promise = null;
+                cached.conn = null;
+                console.error("MongoDB connection error:", err.message);
+                throw err;
+            });
     }
 
-    try {
-        cached.conn = await cached.promise;
-    } catch (err) {
-        cached.promise = null;
-        console.error("Database connection failed:", err);
-        throw err;
-    }
-
+    cached.conn = await cached.promise;
     return cached.conn;
-}
+};
 
 export default dbConnect;
